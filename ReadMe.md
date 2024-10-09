@@ -16,7 +16,7 @@ It is specialized for research papers, documentations, or other files that are l
    - (Windows): set set OPENAI_API_KEY='YOUR_OPEN_AI_KEY'
 
 3. Launch.
-   - python3 -m streamlit run quanta_copy.py
+   - python -m streamlit run quanta_copy.py
 
 If some of these do not work, try the following.
 1. python --> python3
