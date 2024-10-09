@@ -1,0 +1,7 @@
+streamlit
+langchain
+openai
+chromadb
+PyPDF2
+python-docx
+unittest-xml-reporting  # For unittest.mock 
