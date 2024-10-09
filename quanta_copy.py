@@ -150,36 +150,36 @@ class Quanta:
     
     #-------------------END SUMMARY-----------------------#
 
+    # For free talking.
     def simple_responder(self, query):
-        """Generate simple responses such as greetings or follow-ups."""
         simple_prompt = f"Please generate a simple response to the following query: '{query}'"
         response = self.llm(simple_prompt)
         return response
 
 
-    def context_tool(self, query):
-        """Retrieve relevant context for a query from the document store."""
-        retriever = self.document_store.as_retriever()
-        context_docs = retriever.get_relevant_documents(query)
+    # def context_tool(self, query):
+    #     """Retrieve relevant context for a query from the document store."""
+    #     retriever = self.document_store.as_retriever()
+    #     context_docs = retriever.get_relevant_documents(query)
         
-        # Format the documents into a concise context
-        prompt_template = PromptTemplate(
-            input_variables=["docs"],
-            template="""
-            You are a professional assistant for a chatbot system.
-            Based on the following documents, provide a relevant context for the user's query.
-            Documents: {docs}
-            """
-        )
-        docs_content = " ".join([doc.page_content for doc in context_docs])
-        prompt = prompt_template.format(docs=docs_content)
+    #     # Format the documents into a concise context
+    #     prompt_template = PromptTemplate(
+    #         input_variables=["docs"],
+    #         template="""
+    #         You are a professional assistant for a chatbot system.
+    #         Based on the following documents, provide a relevant context for the user's query.
+    #         Documents: {docs}
+    #         """
+    #     )
+    #     docs_content = " ".join([doc.page_content for doc in context_docs])
+    #     prompt = prompt_template.format(docs=docs_content)
         
-        context_response = self.llm(prompt)
-        return context_response
+    #     context_response = self.llm(prompt)
+    #     return context_response
 
 #--------------START Streamlit Interface--------------------#
 def streamlit_ui():
-    st.title("Quanta-Bot for Researchers.") #Potentially my chatbot name.
+    st.title("Quanta-Bot for Researchers.")
 
     # Use mock for testing purposes
     with patch('quanta_copy.OpenAI', new=MockOpenAI):
@@ -187,28 +187,31 @@ def streamlit_ui():
         quanta = Quanta()
 
         # File uploader
-        file = st.file_uploader("Upload your document (txt, pdf, docx)", type=["txt", "pdf", "docx"])
+        file = st.file_uploader("Upload your document (.txt, .pdf, .docx)", type=["txt", "pdf", "docx"])
 
         # Query input
-        query = st.text_input("Enter your query for summarization or retrieval:")
+        query = st.text_input("Enter your query to Quanta!")
 
         # User query (input) for requesting particular chatbot service.
         if query:
             st.write("Processing...")
-            if file and "summarize" or "summary" in query.lower():
+            if file and ("summarize" in query.lower() or "summary" in query.lower() or "summaries" in query.lower()):
                 summary = quanta.summary_tool(file)
-                st.write("Summary of document: ")
+                st.write("Here is your summary:")
                 st.write(summary)
-            
+            # --> Other functionalities goes here.
             else: #any other features can be added in the future
-                st.write("Retrieved information: ")
-                retreived_info = quanta.query_chain(file)
+                retreived_info = quanta.simple_responder(file)
                 st.write(retreived_info)
 
 if __name__ == "__main__":
     streamlit_ui()
 #--------------END Streamlit Interface--------------------#
 
+
+
+# TODO: continuous talking (back-and-forth)
+# TODO: Uploading multiple PDFs.
 
 # TODO : Add more error handling and logging
 # TODO : Add more comments and docstrings
