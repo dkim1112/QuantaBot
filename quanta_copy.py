@@ -74,15 +74,15 @@ class Quanta:
                 total_word += len(content.split())
         
         if (total_word > 40000):
-            chunk_size = 3000
+            chunk_size = 1000
         elif (total_word > 30000):
-            chunk_size = 2500
+            chunk_size = 1500
         elif (total_word > 20000):
             chunk_size = 2000
         elif (total_word > 10000):
-            chunk_size = 1500
+            chunk_size = 2500
         else:
-            chunk_size = 1000
+            chunk_size = 3000
 
         def split_into_chunks(text, chunk_size):
             words = text.split()
