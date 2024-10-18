@@ -10,6 +10,7 @@ from pathlib import Path
 from PyPDF2 import PdfReader  # Using PyPDF2 for PDF reading
 import openai
 
+
 class CustomPDFLoader:
     def __init__(self, file_obj):
         self.file_obj = file_obj
@@ -18,15 +19,16 @@ class CustomPDFLoader:
         """Load the PDF content from a file-like object."""
         reader = PdfReader(self.file_obj)
         pages = [page.extract_text() for page in reader.pages]
-        documents = [{'page_content': page} for page in pages]
+        documents = [{"page_content": page} for page in pages]
         return documents
-    
+
+
 class RAGAgent:
     def __init__(self, openai_api_key):
         """Initialize the RAGAgent with the retriever and language model."""
         # Set OpenAI API key using OpenAI's Python client
         openai.api_key = openai_api_key
-        
+
         # Initialize OpenAI language model without passing openai_api_key directly
         self.llm = OpenAI(temperature=0)
         self.document_store = self.get_doc_store()
@@ -34,7 +36,9 @@ class RAGAgent:
 
     def get_doc_store(self):
         """Initialize ChromaDB as the document store for retrieval."""
-        return Chroma(persist_directory="chroma_db", embedding_function=OpenAIEmbeddings())
+        return Chroma(
+            persist_directory="chroma_db", embedding_function=OpenAIEmbeddings()
+        )
 
     def write_documents(self, file):
         """Load and write the documents into the ChromaDB document store."""
@@ -61,11 +65,14 @@ class RAGAgent:
 
         def split_into_chunks(text, chunk_size=3000):
             words = text.split()
-            return [' '.join(words[i:i + chunk_size]) for i in range(0, len(words), chunk_size)]
+            return [
+                " ".join(words[i : i + chunk_size])
+                for i in range(0, len(words), chunk_size)
+            ]
 
         chunked_docs = []
         for doc in documents:
-            content = doc.get('content') or doc.get('page_content')
+            content = doc.get("content") or doc.get("page_content")
             if content:
                 chunked_docs.extend(split_into_chunks(content))
         return chunked_docs
@@ -83,7 +90,7 @@ class RAGAgent:
         1. A summary (reply with "1")
         2. Retrieval of extra information from a vector database (reply with "2")
         3. A simple greeting/gratitude/salutation response (reply with "3")."""
-        
+
         instruction = f"{system_prompt}\nUser query: {query}"
         response = self.llm(instruction)
         return response.strip()
@@ -98,7 +105,7 @@ class RAGAgent:
             User query: {query}
             Text chunk to summarize: {chunk}
             Provide a concise and accurate summary based on the user’s query.
-            """
+            """,
         )
         prompt = prompt_template.format(query=query, chunk=chunk)
         summary = self.llm(prompt)
@@ -106,7 +113,9 @@ class RAGAgent:
 
     def simple_responder(self, query):
         """Generate simple responses such as greetings or follow-ups."""
-        simple_prompt = f"Please generate a simple response to the following query: '{query}'"
+        simple_prompt = (
+            f"Please generate a simple response to the following query: '{query}'"
+        )
         response = self.llm(simple_prompt)
         return response
 
@@ -129,7 +138,7 @@ class RAGAgent:
             You are responsible for reducing multiple summaries into a single concise one.
             Here are the summaries: {summaries}
             Provide a concise, accurate summary.
-            """
+            """,
         )
         prompt = prompt_template.format(summaries=combined_summaries)
         reduced_summary = self.llm(prompt)
@@ -139,20 +148,23 @@ class RAGAgent:
         """Summarize an entire document by splitting it into chunks, summarizing, and reducing."""
         # Step 1: Chunk the document
         chunked_docs = self.chunk_documents(file)
-        
+
         # Step 2: Summarize each chunk
-        summaries = [self.map_summarizer("Summarize this document", chunk) for chunk in chunked_docs]
-        
+        summaries = [
+            self.map_summarizer("Summarize this document", chunk)
+            for chunk in chunked_docs
+        ]
+
         # Step 3: Reduce multiple summaries into a final summary
         final_summary = self.reduce_summarizer(summaries)
-        
+
         return final_summary
 
     def context_tool(self, query):
         """Retrieve relevant context for a query from the document store."""
         retriever = self.document_store.as_retriever()
         context_docs = retriever.get_relevant_documents(query)
-        
+
         # Format the documents into a concise context
         prompt_template = PromptTemplate(
             input_variables=["docs"],
@@ -160,11 +172,11 @@ class RAGAgent:
             You are a professional assistant for a chatbot system.
             Based on the following documents, provide a relevant context for the user's query.
             Documents: {docs}
-            """
+            """,
         )
         docs_content = " ".join([doc.page_content for doc in context_docs])
         prompt = prompt_template.format(docs=docs_content)
-        
+
         context_response = self.llm(prompt)
         return context_response
 
@@ -181,7 +193,9 @@ def streamlit_ui():
         rag_agent = RAGAgent(openai_api_key=openai_api_key)
 
         # File uploader
-        file = st.file_uploader("Upload your document (txt, pdf, docx)", type=["txt", "pdf", "docx"])
+        file = st.file_uploader(
+            "Upload your document (txt, pdf, docx)", type=["txt", "pdf", "docx"]
+        )
 
         # Query input
         query = st.text_input("Enter your query for summarization or retrieval:")
@@ -199,9 +213,9 @@ def streamlit_ui():
             st.write("Retrieved Information:")
             st.write(retrieved_info)
 
+
 if __name__ == "__main__":
     streamlit_ui()
-
 
 
 # TODO : Add more error handling and logging
