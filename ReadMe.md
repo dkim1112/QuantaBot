@@ -1,9 +1,5 @@
 # TBD...
 
-# INTRO
-We will only be using "quanta_copy.py" for now, as we do not use an actual OpenAI API at the moment.
-Instead, we use a mock API.
-
 # USAGE
 It is specialized for research papers, documentations, or other files that are lengthy.
 
@@ -16,7 +12,7 @@ It is specialized for research papers, documentations, or other files that are l
    - (Windows): set set OPENAI_API_KEY='YOUR_OPEN_AI_KEY'
 
 3. Launch.
-   - python -m streamlit run quanta_copy.py
+   - python -m streamlit run quanta.py
 
 If some of these do not work, try the following.
 1. python --> python3
