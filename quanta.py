@@ -156,7 +156,7 @@ class Quanta:
             You are responsible for summarizing a chunk of text according to a user’s query.
             User query: {query}
             Text chunk to summarize: {chunk}
-            Provide ONE SENTENCE summary based on the user’s query.
+            Provide ONE to TWO SENTENCE summary based on the user’s query.
             """,
         )
         prompt = prompt_template.format(query=query, chunk=chunk)
@@ -169,10 +169,9 @@ class Quanta:
         prompt_template = PromptTemplate(
             input_variables=["summaries"],
             template="""
-            You are a professional summarizer for a chatbot system.
             You are responsible for combining multiple summaries into couple paragraphs.
             Here are the summaries: {summaries}
-            Provide an accurate summary. Double check the grammar.
+            Provide an ACCURATE summary. DOUBLE CHECK the GRAMMAR.
             """,
         )
         prompt = prompt_template.format(summaries=combined_summaries)
