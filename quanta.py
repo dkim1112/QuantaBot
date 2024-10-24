@@ -1,6 +1,7 @@
 import streamlit as st
 import re
 import ast
+import tiktoken
 
 from langchain.vectorstores import Chroma
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -21,8 +22,7 @@ from pathlib import Path
 from PyPDF2 import PdfReader  # Using PyPDF2 for PDF reading
 
 
-# Making a MockAPI (to not use OpenAI API Request everytime)
-class MockOpenAI(LLM):
+class MyOpenAI(LLM):
     @property
     def _llm_type(self) -> str:
         return "OpenAI"
@@ -70,6 +70,7 @@ def str_to_document(text: str):
     return Document(page_content=page_content, metadata=metadata)
 
 
+# Main component of the Chatbot Quanta.
 class Quanta:
     def __init__(self, llm=None):
         """Initialize the Quanta with a language model."""
@@ -80,36 +81,41 @@ class Quanta:
         self.retriever = self.document_store.as_retriever()
 
     def get_doc_store(self):
-        """Initialize ChromaDB as the document store for retrieval."""
+        # Initialize ChromaDB as the document store for retrieval.
         return Chroma(
             persist_directory="chroma_db", embedding_function=OpenAIEmbeddings()
         )
 
-    def chunk_documents(self, file):
-        """Chunk documents for further processing (summarization)."""
-        """Load and write the documents into the ChromaDB document store."""
-        if file.name.endswith(".docx"):
-            loader = TextLoader(file.name)
-        elif file.name.endswith(".txt"):
-            loader = TextLoader(file.name)
-        elif file.name.endswith(".pdf"):
-            loader = CustomPDFLoader(file)
+    def chunk_documents(self, files):
+        all_docs = []
 
-        documents = loader.load()
+        for file in files:
+            # Chunk documents for further processing (summarization).
+            # Load and write the documents into the ChromaDB document store.
+            if file.name.endswith(".docx"):
+                loader = TextLoader(file.name)
+            elif file.name.endswith(".txt"):
+                loader = TextLoader(file.name)
+            elif file.name.endswith(".pdf"):
+                loader = CustomPDFLoader(file)
 
-        text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-            encoding_name="cl100k_base", chunk_size=1000, chunk_overlap=0
-        )
+            documents = loader.load()
 
-        raw_chunks = text_splitter.split_documents(documents)
+            text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+                encoding_name="cl100k_base", chunk_size=1500, chunk_overlap=0
+            )
 
-        chunks = [str(documents) for documents in raw_chunks]
-        chunks = [preprocess_text(chunk) for chunk in chunks]
-        docs = [str_to_document(chunk) for chunk in chunks]
+            raw_chunks = text_splitter.split_documents(documents)
 
-        print(len(docs))
+            chunks = [str(documents) for documents in raw_chunks]
+            chunks = [preprocess_text(chunk) for chunk in chunks]
+            docs = [str_to_document(chunk) for chunk in chunks]
 
-        return docs
+            # docs is a list of documents. We extend (append) that to a list of all_docs, which has all of it.
+            all_docs.extend(docs)
+
+        # We are returning a full set of chunks that combined all the files uploaded into one.
+        return all_docs
 
     def query_chain(self, query):
         """Run a query using the LangChain-based QA chain with ChromaDB."""
@@ -118,22 +124,48 @@ class Quanta:
         return result
 
     # -------------------START SUMMARY-----------------------#
+    def estimate_tokens(self, text: str) -> int:
+        encoding = tiktoken.get_encoding("cl100k_base")
+        return len(encoding.encode(text))
+
+    def calculate_optimal_batch(self, summaries: list) -> int:
+        MAX_TOKENS_PER_REQUEST = 4096
+        TARGET_TOKENS_PER_BATCH = MAX_TOKENS_PER_REQUEST * 0.6
+
+        sample_size = min(len(summaries), 10)
+        sample_summaries = summaries[:sample_size]
+
+        total_tokens = sum(
+            self.estimate_tokens(summary) for summary in sample_summaries
+        )
+        avg_tokens_per_summary = total_tokens / sample_size
+
+        optimal_size = max(1, int(TARGET_TOKENS_PER_BATCH / avg_tokens_per_summary))
+        return min(max(optimal_size, 2), 20)  # Between 2 and 20 summaries per batch
+
     def summary_tool(self, file):
         """Summarize an entire document by splitting it into chunks, summarizing, and reducing."""
         # Step 1: Chunk the original document
         chunked_docs = self.chunk_documents(file)
 
+        chunk_summaries = []
+        for chunk in chunked_docs:
+            summary = self.map_summarizer(self, chunk)
+            chunk_summaries.append(summary)
+
+        # Calculate optimal batch size for these summaries
+        batch_size = self.calculate_optimal_batch(chunk_summaries)
+
         # Step 2: Summarize each chunk
         summaries = [self.map_summarizer(self, chunk) for chunk in chunked_docs]
-
-        batch_size = 10
         combined_summaries = ""
 
-        # Loop over chunked_docs in batches of size 10
+        # Through summaries, we now have each chunks into one sentence summary.
+        # Now, we are adding multiple chunks (with 1 sentence) to go through map_summarizer ONCE MORE,
+        # to ensure that when contents are sent to map_summarizer, it isn't too long.
+        # Loop over chunked_docs in specific batch size.
         for i in range(0, len(summaries), batch_size):
-            batch = summaries[
-                i : i + batch_size
-            ]  # Get a batch of 10 (or fewer if at the end)
+            batch = summaries[i : i + batch_size]
 
             combined_text = " ".join([doc for doc in batch])
 
@@ -156,7 +188,7 @@ class Quanta:
             You are responsible for summarizing a chunk of text according to a user’s query.
             User query: {query}
             Text chunk to summarize: {chunk}
-            Provide ONE to TWO SENTENCE summary based on the user’s query.
+            Provide ONE SENTENCE summary based on the user’s query.
             """,
         )
         prompt = prompt_template.format(query=query, chunk=chunk)
@@ -171,7 +203,7 @@ class Quanta:
             template="""
             You are responsible for combining multiple summaries into couple paragraphs.
             Here are the summaries: {summaries}
-            Provide an ACCURATE summary. DOUBLE CHECK the GRAMMAR.
+            Provide an ACCURATE summary. DOUBLE CHECK the GRAMMAR. Ensure sentences are COMPLETE.
             """,
         )
         prompt = prompt_template.format(summaries=combined_summaries)
@@ -180,7 +212,7 @@ class Quanta:
 
     # -------------------END SUMMARY-----------------------#
 
-    # For free talking.
+    # For free talking - still needs revision.
     def simple_responder(self, query):
         simple_prompt = (
             f"Please generate a simple response to the following query: '{query}'"
@@ -188,38 +220,18 @@ class Quanta:
         response = self.llm(simple_prompt)
         return response
 
-    # def context_tool(self, query):
-    #     """Retrieve relevant context for a query from the document store."""
-    #     retriever = self.document_store.as_retriever()
-    #     context_docs = retriever.get_relevant_documents(query)
-
-    #     # Format the documents into a concise context
-    #     prompt_template = PromptTemplate(
-    #         input_variables=["docs"],
-    #         template="""
-    #         You are a professional assistant for a chatbot system.
-    #         Based on the following documents, provide a relevant context for the user's query.
-    #         Documents: {docs}
-    #         """
-    #     )
-    #     docs_content = " ".join([doc.page_content for doc in context_docs])
-    #     prompt = prompt_template.format(docs=docs_content)
-
-    #     context_response = self.llm(prompt)
-    #     return context_response
-
 
 # --------------START Streamlit Interface--------------------#
 def streamlit_ui():
     st.title("Quanta-Bot for Researchers.")
 
-    # Use mock for testing purposes
-    # Initialize the quanta (it will use the mock OpenAI API)
     quanta = Quanta()
 
     # File uploader
     file = st.file_uploader(
-        "Upload your document (.txt, .pdf, .docx)", type=["txt", "pdf", "docx"]
+        "Upload one or more documents (.txt, .pdf, .docx)",
+        type=["txt", "pdf", "docx"],
+        accept_multiple_files=True,
     )
 
     # Query input
@@ -244,11 +256,13 @@ def streamlit_ui():
 
 if __name__ == "__main__":
     streamlit_ui()
+
 # --------------END Streamlit Interface--------------------#
 
-
-# TODO: continuous talking (back-and-forth)
-# TODO: Uploading multiple PDFs.
+# TODO : continuous talking (back-and-forth)
+# TODO : Implement chatbot history.
+# TODO : Allow free talking & asking general questions about the document too.
+# TODO : Have options to give reference to where it got the information (through saving history).
 
 # TODO : Add more error handling and logging
 # TODO : Add more comments and docstrings
@@ -260,4 +274,4 @@ if __name__ == "__main__":
 # TODO : Document Summarization: It can summarize documents to provide concise answers or overviews.
 # TODO : Follow-up Answers: The quanta can answer follow-up questions based on previous interactions and the current conversation context.
 # TODO : Logical Intent Determination: It uses logic to determine user intent, ensuring accurate responses.
-# TODO : UI Streamlit 건들여서 발전 시켜보기
+# TODO : UI Streamlit 건드려서 발전 시켜보기
