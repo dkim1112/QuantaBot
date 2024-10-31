@@ -2,13 +2,16 @@ import streamlit as st
 import re
 import ast
 import tiktoken
+import nltk
+
+nltk.download("punkt")
 
 from langchain.vectorstores import Chroma
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.chains import retrieval_qa
 from langchain_openai import OpenAI
 from langchain.document_loaders import TextLoader, PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_text_splitters import NLTKTextSplitter
 from langchain.docstore.document import Document
 
 from typing import Any, Dict, Iterator, List, Mapping, Optional
@@ -86,7 +89,7 @@ class Quanta:
             persist_directory="chroma_db", embedding_function=OpenAIEmbeddings()
         )
 
-    def chunk_documents(self, files):
+    def chunk_documents(self, files, sentences_per_chunk=5):
         all_docs = []
 
         for file in files:
@@ -101,10 +104,11 @@ class Quanta:
 
             documents = loader.load()
 
-            text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-                encoding_name="cl100k_base", chunk_size=1500, chunk_overlap=0
-            )
+            # Instead of splitting recursively by character
+            # Decided to split by sentence (so that no words get cut off in summary.)
+            text_splitter = NLTKTextSplitter()
 
+            # This generates one chunk for "each sentence" --> Too many chunks...
             raw_chunks = text_splitter.split_documents(documents)
 
             chunks = [str(documents) for documents in raw_chunks]
@@ -246,6 +250,7 @@ def streamlit_ui():
             or "summaries" in query.lower()
         ):
             summary = quanta.summary_tool(file)
+            print(summary)
             st.write("Here is your summary:")
             st.write(summary)
         # --> Other functionalities goes here.
@@ -263,6 +268,7 @@ if __name__ == "__main__":
 # TODO : Implement chatbot history.
 # TODO : Allow free talking & asking general questions about the document too.
 # TODO : Have options to give reference to where it got the information (through saving history).
+# TODO : Cut document at first when received, to only relevant infos?
 
 # TODO : Add more error handling and logging
 # TODO : Add more comments and docstrings
