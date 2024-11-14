@@ -4,7 +4,7 @@ from langchain.chains import RetrievalQA
 from langchain_openai import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.docstore.document import Document
-from ..utils.document_processor import DocumentProcessor  # Updated import
+from ..utils.document_processor import DocumentProcessor
 from ..utils.token_counter import estimate_tokens, calculate_optimal_batch
 
 # Main component of the Chatbot Quanta.

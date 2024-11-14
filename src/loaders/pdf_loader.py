@@ -1,8 +1,8 @@
 from PyPDF2 import PdfReader
 from langchain.docstore.document import Document
 
-# Had to create a custom PDF Loader because the PyPDFLoader itself didnt work.
-# Compatibility issue with Streamlit.
+# Had to create a custom PDF Loader because the PyPDFLoader itself didn't work.
+# Seems to be a compatibility issue with Streamlit (UI).
 class CustomPDFLoader:
     def __init__(self, file_obj):
         self.file_obj = file_obj
