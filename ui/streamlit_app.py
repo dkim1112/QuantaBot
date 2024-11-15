@@ -1,10 +1,9 @@
 import streamlit as st
 from src.core.quanta import Quanta  # Make sure to import your Quanta class
 
-st.title("Quanta-Bot for Researchers")
-
 def streamlit_ui():
     # Set up the Streamlit app title
+    st.title("Quanta-Bot for Researchers")
 
     # Initialize Quanta instance
     quanta = Quanta()
