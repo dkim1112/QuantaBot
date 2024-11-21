@@ -3,7 +3,7 @@ from src.core.quanta import Quanta  # Make sure to import your Quanta class
 
 def streamlit_ui():
     # Set up the Streamlit app title
-    st.title("Quanta-Bot for Researchers")
+    st.title("Quanta-Bot [In-Development]")
 
     # Initialize Quanta instance
     quanta = Quanta()
