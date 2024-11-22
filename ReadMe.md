@@ -20,7 +20,7 @@ Follow the steps below to set up the chatbot:
 
 - **Windows**:
   ```bash
-  set set OPENAI_API_KEY='YOUR_OPEN_AI_KEY'
+  set OPENAI_API_KEY='YOUR_OPEN_AI_KEY'
 
 ## **Usage**
 To use Quanta Chatbot, follow these steps:
