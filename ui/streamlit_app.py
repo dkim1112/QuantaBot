@@ -47,7 +47,7 @@ def streamlit_ui():
             response = quanta.summary_tool(st.session_state["file"])
         else:
             # Use Quanta’s query chain for other queries
-            response = quanta.query_chain(prompt)
+            response = quanta.query_chain(st.session_state["file"], prompt)
         
         # Display assistant response
         with st.chat_message("assistant"):

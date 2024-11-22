@@ -6,7 +6,7 @@ from langchain.prompts import PromptTemplate
 from langchain.docstore.document import Document
 from ..utils.document_processor import DocumentProcessor
 from ..utils.token_counter import estimate_tokens, calculate_optimal_batch
-
+import shutil
 # Main component of the Chatbot Quanta.
 class Quanta:
     def __init__(self, llm=None):
@@ -21,23 +21,56 @@ class Quanta:
             persist_directory="chroma_db",
             embedding_function=OpenAIEmbeddings()
         )
+    
+    def reset_document_store(self):
+        # # Clear the persistent directory if it exists
+        # persist_dir = "chroma_db"
+        # shutil.rmtree(persist_dir, ignore_errors=True)
+        """Clear the document store to remove any previously uploaded documents."""
+        self.document_store = self.get_doc_store()  # Reinitialize the store
+        self.retriever = self.document_store.as_retriever()
 
     def chunk_documents(self, files, sentences_per_chunk=5):
-        return DocumentProcessor.chunk_documents(files, self.document_store)
+        self.reset_document_store()
+        chunked_docs = DocumentProcessor.chunk_documents(files, self.document_store)
+        return chunked_docs
 
-    def query_chain(self, query):
-        if not self.retriever:
-            return "Please upload documents first before asking questions."
-            
-        qa_chain = RetrievalQA.from_chain_type(
-            llm=self.llm,
-            chain_type="stuff",
-            retriever=self.retriever,
-            return_source_documents=True
-        )
+    def query_chain(self, files, query):
+        chunked_docs = self.chunk_documents(files)
         
-        result = qa_chain({"query": query})
-        return result["result"]
+    # Aggregate responses from batches
+        final_response = ""
+        for i in range(0, len(chunked_docs), 5):
+            # Select a batch of chunks
+            batch_chunks = chunked_docs[i:i+5]
+            
+            # Combine batch chunks into a single context
+            batch_context = " ".join([chunk.page_content for chunk in batch_chunks])
+            
+            # Create a prompt that includes the query and batch context
+            batch_prompt = PromptTemplate(
+                input_variables=["query", "context"],
+                template="""
+                Given the following context from a document and the query, 
+                provide a focused response for the QUERY specifically:
+                
+                Query: {query}
+                Context: {context}
+                
+                Response:
+                """,
+            )
+            
+            # Format the prompt
+            formatted_prompt = batch_prompt.format(query=query, context=batch_context)
+            
+            # Get response for this batch
+            batch_response = self.llm(formatted_prompt)
+            
+            # Append batch response
+            final_response += batch_response + "\n\n"
+        
+        return final_response
 
     def summary_tool(self, file):
         # Step 1: Chunk the original document
