@@ -6,7 +6,7 @@ from langchain.prompts import PromptTemplate
 from langchain.docstore.document import Document
 from ..utils.document_processor import DocumentProcessor
 from ..utils.token_counter import estimate_tokens, calculate_optimal_batch
-import shutil
+
 # Main component of the Chatbot Quanta.
 class Quanta:
     def __init__(self, llm=None):
@@ -73,38 +73,41 @@ class Quanta:
         return final_response
 
     def summary_tool(self, file):
-        # Step 1: Chunk the original document
+        # Step 1: Chunk the original document, and save each chunks into one unique index of the chunked_docs list.
         chunked_docs = self.chunk_documents(file)
         
+        # Step 2: Iterating through the chunked_docs list above, we summarize each index and added to a NEW list,
+        # called the chunked_summaries.
         chunk_summaries = []
         for chunk in chunked_docs:
             summary = self.map_summarizer(self, chunk)
             chunk_summaries.append(summary)
 
-        # Calculate optimal batch size for these summaries
+        # Step 3: Depending on the size of the chunk_summaries, batch size should be determined
+        # before sending to LLM. This is to prevent token-limit error.
+        # Calculate optimal batch size for these summaries.
         batch_size = calculate_optimal_batch(chunk_summaries, estimate_tokens)
         
-        # Step 2: Summarize each chunk
-        summaries = [self.map_summarizer(self, chunk) for chunk in chunked_docs]
+        # Step 4: Summarize each batches OF chunks and save it here as a string.
         combined_summaries = ""
 
-        # Through summaries, we now have each chunks into one sentence summary.
-        # Now, we are adding multiple chunks (with 1 sentence) to go through map_summarizer ONCE MORE,
-        # to ensure that when contents are sent to map_summarizer, it isn't too long.
-        # Loop over chunked_docs in specific batch size.
-        for i in range(0, len(summaries), batch_size):
-            batch = summaries[i : i + batch_size]
+        # Through summaries above, we now have each chunks into one sentence summary.
+        # Now, we are adding multiple chunks (with 1 sentence) = ONE batch each, to go through map_summarizer ONCE MORE.
+        for i in range(0, len(chunk_summaries), batch_size):
+            batch = chunk_summaries[i : i + batch_size]
             combined_text = " ".join([doc for doc in batch])
 
             # Create a new LangChain Document with the combined text
             combined_document = Document(page_content=combined_text)
             combined_summaries += self.map_summarizer(self, combined_document)
+            # As a result, combined_summaries is a STRING full of necessary sentences. Might be quite long.
 
-        # Step 3: Reduce multiple summaries into a final summary
+        # Step 5: Final summarize the combined_summaries.
         final_summary = self.reduce_summarizer(combined_summaries)
         return final_summary
         
-    # Summarize into multiple chunk of text based on user's query.
+    # Summarize text(s) based on user's query. Will return one sentence summary every call.
+    # This is NOT the final summary.
     def map_summarizer(self, query, chunk):
         prompt_template = PromptTemplate(
             input_variables=["query", "chunk"],
@@ -120,7 +123,7 @@ class Quanta:
         summary = self.llm(prompt)
         return summary
 
-    # With the multiple chunks, further summarize them by combining those different chunks.
+    # Determinant for FINAL Summary output.
     def reduce_summarizer(self, summaries):
         combined_summaries = " ".join(summaries)
         prompt_template = PromptTemplate(
@@ -135,6 +138,7 @@ class Quanta:
         reduced_summary = self.llm(prompt)
         return reduced_summary
 
+    # NOT DONE YET
     def simple_responder(self, query):
         simple_prompt = f"Please generate a simple response to the following query: '{query}'"
         response = self.llm(simple_prompt)
