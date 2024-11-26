@@ -1,5 +1,5 @@
 import streamlit as st
-from src.core.quanta import Quanta  # Make sure to import your Quanta class
+from src.core.quanta import Quanta
 
 def streamlit_ui():
     # Set up the Streamlit app title
