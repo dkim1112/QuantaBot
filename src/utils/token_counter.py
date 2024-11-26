@@ -4,7 +4,6 @@ def estimate_tokens(text: str) -> int:
     encoding = tiktoken.get_encoding("cl100k_base")
     return len(encoding.encode(text))
 
-# Since it is taking the text to calculate the optimal batch size as LIST, this is ONLY for summary method.
 def calculate_optimal_batch(summaries: list, estimate_tokens_func) -> int:
     MAX_TOKENS_PER_REQUEST = 4096
     TARGET_TOKENS_PER_BATCH = MAX_TOKENS_PER_REQUEST * 0.6
