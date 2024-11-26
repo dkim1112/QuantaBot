@@ -38,14 +38,19 @@ class Quanta:
     def query_chain(self, files, query):
         chunked_docs = self.chunk_documents(files)
         
-    # Aggregate responses from batches
-        final_response = ""
-        for i in range(0, len(chunked_docs), 5):
+        chunk_contents = [chunk.page_content for chunk in chunked_docs]
+
+        batch_size = calculate_optimal_batch(chunk_contents, estimate_tokens)
+
+        final_responses = []
+    
+        # Aggregate responses from batches
+        for i in range(0, len(chunked_docs), batch_size):
             # Select a batch of chunks
-            batch_chunks = chunked_docs[i:i+5]
+            batch = chunk_contents[i:i+batch_size]
             
             # Combine batch chunks into a single context
-            batch_context = " ".join([chunk.page_content for chunk in batch_chunks])
+            batch_context = " ".join(batch)
             
             # Create a prompt that includes the query and batch context
             batch_prompt = PromptTemplate(
@@ -67,10 +72,10 @@ class Quanta:
             # Get response for this batch
             batch_response = self.llm(formatted_prompt)
             
-            # Append batch response
-            final_response += batch_response + "\n\n"
-        
-        return final_response
+            # Append batch responses
+            final_responses.append(batch_response)
+            
+        return self.reduce_queries(final_responses)
 
     def summary_tool(self, file):
         # Step 1: Chunk the original document, and save each chunks into one unique index of the chunked_docs list.
@@ -138,6 +143,21 @@ class Quanta:
         reduced_summary = self.llm(prompt)
         return reduced_summary
 
+    def reduce_queries(self, final_response):
+            final_response = " ".join(final_response)
+            prompt_template = PromptTemplate(
+                input_variables=["final_response"],
+                template="""
+                You are responsible for combining multiple sentences into paragraphs or sentences, depending on the length.
+                Here are the responses: {final_response}
+                Within all those texts, there's probably a commonality of the answers. 
+                Explain those answers so that it provides a clear answer to the question, without mentioning that they are commonalities.
+                """,
+            )
+            prompt = prompt_template.format(final_response=final_response)
+            reduced_response = self.llm(prompt)
+            return reduced_response
+    
     # NOT DONE YET
     def simple_responder(self, query):
         simple_prompt = f"Please generate a simple response to the following query: '{query}'"
