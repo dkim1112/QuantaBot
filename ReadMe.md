@@ -20,16 +20,14 @@ Follow the steps below to set up your chatbot:
 
 3. **Install other files**
 
-   Sometimes, manual installations are required. For the following lines of code, please copy and paste it into the terminal in the order given.
+   Sometimes, manual installations are required. For the following lines of code, please copy and paste each line into the terminal in the order given.
 
    ```bash
-   pip install openai
-
    pip install langchain
 
    pip install -U langchain-community
 
-   pip install streamlit pypdf2 tiktoken nltk
+   pip install openai chromadb streamlit pypdf2 tiktoken nltk
    ```
 
 4. **Set up your OpenAI API key**
@@ -62,7 +60,7 @@ To use Quanta Chatbot, follow these steps:
 
 3. A page will be launched on your default web browser.
 
-   **NOTICE**: At this stage, if the page shows a red screen with a "module not found" error, please install the ones listed in the error message manually at the console as well, using the following template. This tends to vary by computer.
+   **NOTICE**: At this stage, if the page shows a red screen with a "module not found" error, please install the ones listed in the error message manually at the terminal as well, using the following template. This tends to vary by computer.
 
    ```bash
    pip install <dependencies you need>
