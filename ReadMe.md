@@ -82,9 +82,9 @@ While running the program, various errors might occur. If so, make sure to try t
    pip install --upgrade <dependency being updated>
    ```
 
-2. Ensure that your OpenAI has enough credit balance. This can checked at (platform.openai.com)
-3. Make sure you search up the error message that appears on terminal window.
-4. Hand type the terminal commands, instead of copy and pasting.
+2. Ensure that your OpenAI has enough credit balance, else it won't be making successful API calls. This can be checked at (platform.openai.com)
+3. Make sure to search up the error message that appears on the terminal window.
+4. Hand type the terminal commands, instead of copying and pasting.
 
 ##
 
