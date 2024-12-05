@@ -63,14 +63,13 @@ To use Quanta Chatbot, follow these steps:
    **NOTICE**:
 
    - At this stage, if the page shows a red screen with a _"ModuleNotFound"_ error, please **install** the ones listed in the error message manually at the terminal as well, using the following template. This tends to vary by computer. Then, repeat step 2.
+     ```bash
+     pip install <dependencies you need>
+     ```
    - If _"StreamlitDuplicateElementKey"_ error pops up, just **refresh** the page once more.
 
-   ```bash
-   pip install <dependencies you need>
-   ```
-
 4. Upload as many files as you want by dragging or selecting.
-   - It is intended that files MUST BE uploaded for program to run.
+   - It is intended that files MUST BE uploaded FIRST for program to run.
 5. Ask questions in English about the loaded files using the chat interface.
 
 ## **Resolving Conflicts**
