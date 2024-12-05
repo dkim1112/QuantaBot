@@ -1,6 +1,5 @@
 from langchain.vectorstores import Chroma
 from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.chains import RetrievalQA
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.docstore.document import Document
@@ -151,7 +150,7 @@ class Quanta:
                 You are responsible for combining multiple sentences into paragraphs or sentences, depending on the length.
                 Here are the responses: {final_response}
                 Within all those texts, there's probably a commonality of the answers. 
-                Explain those answers so that it provides a clear answer to the question, without mentioning that they are commonalities.
+                Explain those answers so that it provides a clear answer to the question, without mentioning that they are commonalities and those were the answers/outputs given to you.
                 """,
             )
             prompt = prompt_template.format(final_response=final_response)

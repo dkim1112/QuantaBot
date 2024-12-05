@@ -1,6 +1,7 @@
 from langchain.text_splitter import NLTKTextSplitter
-from langchain.document_loaders import TextLoader
 from ..loaders.pdf_loader import CustomPDFLoader
+from ..loaders.txt_loader import CustomTextLoader
+from ..loaders.docs_loader import CustomDocsLoader
 from .text_processing import preprocess_text, str_to_document
 
 class DocumentProcessor:
@@ -9,15 +10,21 @@ class DocumentProcessor:
         all_docs = []
         for file in files:
             # Load and write the documents into the ChromaDB document store.
-            if file.name.endswith(".docx") or file.name.endswith(".txt"):
-                loader = TextLoader(file.name)
+            if file.name.endswith(".docx"):
+                loader = CustomDocsLoader(file)
+                documents = loader.load()
+            elif file.name.endswith(".txt"):
+                loader = CustomTextLoader(file)
+                documents = loader.load()
             elif file.name.endswith(".pdf"):
                 loader = CustomPDFLoader(file)
-
-            documents = loader.load()
+                documents = loader.load()
+            # Defensive programming
+            else:
+                raise ValueError("Unsupported file type")
 
             # Instead of splitting recursively by character
-            # Decided to split by sentence (so that no words get cut off in summary.)
+            # Decided to split by sentence (so that no words get cut off in summary).
             text_splitter = NLTKTextSplitter()
             raw_chunks = text_splitter.split_documents(documents)
             

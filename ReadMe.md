@@ -27,7 +27,7 @@ Follow the steps below to set up your chatbot:
 
    pip install -U langchain-community
 
-   pip install openai chromadb streamlit pypdf2 tiktoken nltk
+   pip install openai chromadb streamlit pypdf2 tiktoken nltk python-docx
    ```
 
 4. **Set up your OpenAI API key**
@@ -60,15 +60,33 @@ To use Quanta Chatbot, follow these steps:
 
 3. A page will be launched on your default web browser.
 
-   **NOTICE**: At this stage, if the page shows a red screen with a "module not found" error, please install the ones listed in the error message manually at the terminal as well, using the following template. This tends to vary by computer.
+   **NOTICE**:
+
+   - At this stage, if the page shows a red screen with a _"ModuleNotFound"_ error, please **install** the ones listed in the error message manually at the terminal as well, using the following template. This tends to vary by computer. Then, repeat step 2.
+   - If _"StreamlitDuplicateElementKey"_ error pops up, just **refresh** the page once more.
 
    ```bash
    pip install <dependencies you need>
    ```
 
 4. Upload as many files as you want by dragging or selecting.
+   - It is intended that files MUST BE uploaded for program to run.
 5. Ask questions in English about the loaded files using the chat interface.
+
+## **Resolving Conflicts**
+
+While running the program, various errors might occur. If so, make sure to try these temporary solutions.
+
+1. Update the problem dependencies.
+
+   ```bash
+   pip install --upgrade <dependency being updated>
+   ```
+
+2. Ensure that your OpenAI has enough credit balance. This can checked at (platform.openai.com)
+3. Make sure you search up the error message that appears on terminal window.
+4. Hand type the terminal commands, instead of copy and pasting.
 
 ##
 
-For further inquiry, please feel free to contact dongeunk@umich.edu.
+For further inquiries, please feel free to contact dongeunk@umich.edu.
