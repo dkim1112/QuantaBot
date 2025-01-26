@@ -9,7 +9,7 @@ from ..utils.token_counter import estimate_tokens, calculate_optimal_batch
 # Main component of the Chatbot Quanta.
 class Quanta:
     def __init__(self, llm=None):
-        """Initialize the Quanta with a language model."""
+        """Initialize the Quanta with an OpenAI model."""
         self.llm = llm or OpenAI()
         self.document_store = self.get_doc_store()
         self.retriever = self.document_store.as_retriever()
