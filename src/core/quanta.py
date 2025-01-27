@@ -22,7 +22,7 @@ class Quanta:
         )
     
     def reset_document_store(self):
-        # # Clear the persistent directory if it exists
+        # # Clear the persistent directory if it existss
         # persist_dir = "chroma_db"
         # shutil.rmtree(persist_dir, ignore_errors=True)
         """Clear the document store to remove any previously uploaded documents."""
