@@ -10,7 +10,7 @@ from langchain_openai import OpenAI
 from langchain.prompts import PromptTemplate
 from langchain.docstore.document import Document
 from ..utils.document_processor import DocumentProcessor
-from ..utils.token_counter import estimate_tokens, calculate_optimal_batch
+from ..utils.token_counter import estimate_tokens, calculate_optimal_batch # NO LONGER IN USE?
 
 # Main component of the Chatbot Quanta.
 class Quanta:
@@ -137,7 +137,7 @@ class Quanta:
                         candidate_embeddings.append(parsed_embedding)
                         valid_docs.append(doc)
                     else:
-                        # Normalize embedding dimensions (pad or truncate)
+                        # Normalize embedding dimensions (pad or truncate) - temporary solution
                         if len(parsed_embedding) < len(reduced_query_embedding):
                             padded_embedding = parsed_embedding + [0.0] * (len(reduced_query_embedding) - len(parsed_embedding))
                             candidate_embeddings.append(padded_embedding)
