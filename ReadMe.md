@@ -1,4 +1,4 @@
-# **Introduction**
+# **Introductions**
 
 Quanta Chatbot is a Python application designed to handle multiple files, including PDFs, for in-depth discussions. It specializes in working with research papers or lengthy documents, providing precise and contextually relevant response to user questions based on document content(s).
 
