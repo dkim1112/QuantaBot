@@ -1,4 +1,4 @@
-# **Introductions**
+# **Introduction**
 
 Quanta Chatbot is a Python application designed to handle multiple files, including PDFs, for in-depth discussions. It specializes in working with research papers or lengthy documents, providing precise and contextually relevant response to user questions based on document content(s).
 
@@ -43,6 +43,7 @@ Follow the steps below to set up your chatbot:
   ```
 
 - **Windows**:
+
   ```bash
   set OPENAI_API_KEY='YOUR_OPEN_AI_KEY'
   ```
@@ -85,6 +86,43 @@ While running the program, various errors might occur. If so, make sure to try t
 2. Ensure that your OpenAI has enough credit balance, else it won't be making successful API calls. This can be checked at (platform.openai.com)
 3. Make sure to search up the error message that appears on the terminal window.
 4. Hand type the terminal commands, instead of copying and pasting.
+
+## **(Testing) Special Instruction for Terminal Usage**
+
+For development purposes, terminal commands allow automated testing with multiple files.
+
+Follow these instructions in order to use this method:
+
+1. **Commentation**
+
+   In all code files, there will be two sections: a terminal version and a Streamlit version, and each are marked with commentation.
+
+   To use the terminal version, uncomment its code and comment out the Streamlit code.
+
+2. **Manually Insert OpenAI Key**
+
+   Depending on your shell configuration, insert your OpenAI Key.
+
+   ```
+   nano ~/.zshrc (or ~/.bashrc)
+   ```
+
+   ```
+   export OPENAI_API_KEY="YOUR-UNIQUE-KEY-GOES-HERE"
+   ```
+
+   Then, save the file using **(Ctrl + O) -> (Enter) -> (Ctrl + X)**
+
+   Now, apply the changes.
+
+   ```
+   source ~/.zshrc (or ~/.bashrc)
+   ```
+
+3. **Run Program**
+   ```
+   python main.py
+   ```
 
 ##
 
