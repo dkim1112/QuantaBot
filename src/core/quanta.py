@@ -27,6 +27,32 @@ class Quanta:
             embedding_function=OpenAIEmbeddings()
         )
 
+    def save_embeddings_for_projector(self, embeddings, documents, file_prefix="embeddings"):
+        """Save embeddings and metadata in TSV format for TensorFlow Projector."""
+        embeddings_array = np.array(embeddings)
+
+        # Save embeddings as .tsv
+        embeddings_path = f"{file_prefix}_vectors.tsv"
+        np.savetxt(embeddings_path, embeddings_array, delimiter="\t")
+        print(f"📂 Embeddings saved: {embeddings_path}")
+
+        # Print sample text previews before saving metadata
+        print("🔍 Sample text previews for metadata:")
+        for i, doc in enumerate(documents[:5]):  # Print first 5 documents
+            print(f"📄 Document {i}: {doc.page_content[:200]}")  # Show first 200 characters
+
+        # Save metadata (document text preview)
+        metadata_path = f"{file_prefix}_metadata.tsv"
+        with open(metadata_path, "w", encoding="utf-8") as f:
+            f.write("Document ID\tText Preview\n")  # Header
+            for i, doc in enumerate(documents):
+                preview = doc.page_content[:100].replace("\n", " ")  # First 100 chars for better readability
+                preview = ''.join(c if c.isprintable() else '?' for c in preview)  # Replace unprintable chars
+                if len(preview.strip()) == 0:
+                    preview = "[EMPTY CHUNK]"  # Mark empty chunks to identify issues
+                f.write(f"{i}\t{preview}\n")
+        print(f"📂 Metadata saved: {metadata_path}")
+
     def preprocess_pipeline(self, files, n_components=50, n_clusters=10):
         # chunk the documents
         documents = DocumentProcessor.chunk_documents(files, self.document_store)
@@ -74,7 +100,8 @@ class Quanta:
 
         
         self.document_store.add_documents(documents)
-    
+        self.save_embeddings_for_projector(embeddings, documents)
+
     def query_pipeline(self, query, top_k_clusters=3, top_n_chunks=5):
         # generate query embeddings
         query_embedding = OpenAIEmbeddings().embed_query(query)
