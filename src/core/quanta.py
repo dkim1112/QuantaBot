@@ -80,7 +80,6 @@ class Quanta:
         query_embedding = OpenAIEmbeddings().embed_query(query)
         # print(len(query_embedding))
 
-
         if isinstance(query_embedding, list):
             query_embedding = np.array(query_embedding)
         if query_embedding.size == 0:
