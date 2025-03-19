@@ -44,7 +44,7 @@ def compute_f1(retrieved, ground_truth):
 def compute_mrr(retrieved, ground_truth):
     for i, doc_id in enumerate(retrieved, start=1):
         if doc_id in ground_truth:
-            return 1 / i  # Reciprocal rank of the first relevant document
+            return 1 / i  # Reciprocal rank of the first relevant documents
     return 0.0
 
 def compute_recall_at_k(retrieved, ground_truth, k=5):
