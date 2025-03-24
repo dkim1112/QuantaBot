@@ -32,7 +32,7 @@ Follow the steps below to set up your chatbot:
 
 4. **Set up your OpenAI API key**
 
-   Obtain a personal API key from OpenAI and add it to your terminal environment, like this:
+   Obtain a personal API key from [OpenAI](https://openai.com/index/openai-api/) and add it to your terminal environment, like this:
 
    (For temporary usage, please contact the email at the very bottom.)
 
@@ -61,7 +61,7 @@ To use Quanta Chatbot, follow these steps:
 
 3. A page will be launched on your default web browser.
 
-   **NOTICE**:
+   <u>**NOTICE**</u>:
 
    - At this stage, if the page shows a red screen with a _"ModuleNotFound"_ error, please **install** the ones listed in the error message manually at the terminal as well, using the following template. This tends to vary by computer. Then, repeat step 2.
      ```bash
@@ -77,52 +77,23 @@ To use Quanta Chatbot, follow these steps:
 
 While running the program, various errors might occur. If so, make sure to try these temporary solutions.
 
-1. Update the problem dependencies.
+1. Try pip -> pip3 / python -> python3
+2. Update the problem dependencies.
 
    ```bash
    pip install --upgrade <dependency being updated>
    ```
 
-2. Ensure that your OpenAI has enough credit balance, else it won't be making successful API calls. This can be checked at (platform.openai.com)
-3. Make sure to search up the error message that appears on the terminal window.
-4. Hand type the terminal commands, instead of copying and pasting.
+3. Ensure that your OpenAI has enough credit balance, else it won't be making successful API calls. This can be checked at (platform.openai.com)
+4. Make sure to search up the error message that appears on the terminal window.
+5. Hand type the terminal commands, instead of copying and pasting.
 
-## **(Testing) Special Instruction for Terminal Usage**
+## **[Testing] Model Evaluation and Diagnostic Tools**
 
-For development purposes, terminal commands allow automated testing with multiple files.
+Before developing the main chatbot interface, this section shows how the internal components of the retrieval system were tested and evaluated independently. By running a series of experiments-including statistical visualizations, metric-based comparisons, and LangChain evaluations - I aim to identify the most effective configurations for semantic search and information retrieval. This includes analyzing embeddings, scoring methods like F1, NDCG, MRR, Recall@K, and evaluating the trade-offs between accuracy, speed, and memory efficiency across various approaches.
 
-Follow these instructions in order to use this method:
-
-1. **Commentation**
-
-   In all code files, there will be two sections: a terminal version and a Streamlit version, and each are marked with commentation.
-
-   To use the terminal version, uncomment its code and comment out the Streamlit code.
-
-2. **Manually Insert OpenAI Key**
-
-   Depending on your shell configuration, insert your OpenAI Key.
-
-   ```
-   nano ~/.zshrc (or ~/.bashrc)
-   ```
-
-   ```
-   export OPENAI_API_KEY="YOUR-UNIQUE-KEY-GOES-HERE"
-   ```
-
-   Then, save the file using **(Ctrl + O) -> (Enter) -> (Ctrl + X)**
-
-   Now, apply the changes.
-
-   ```
-   source ~/.zshrc (or ~/.bashrc)
-   ```
-
-3. **Run Program**
-   ```
-   python main.py
-   ```
+> ℹ️ **Note**  
+> All files and descriptions relevant to testing can be found in the `src/testing` directory.
 
 ##
 
