@@ -1,6 +1,19 @@
 # **Introduction**
 
-Quanta Chatbot is a Python application designed to handle multiple files, including PDFs, for in-depth discussions. It specializes in working with research papers or lengthy documents, providing precise and contextually relevant response to user questions based on document content(s).
+Quanta Chatbot is a Python application designed to handle multiple files (PDF/DOC/TXT) for in-depth discussions. It specializes in working with research papers or lengthy documents, providing precise and contextually relevant response to user questions based on document content(s). Initially, it was built to aid researchers/professors associated in Department of Dermatology at the University of Michigan.
+
+### Core Technologies
+
+- **Python** as the code language.
+- **BERT-based embeddings** (via Sentence-BERT from HuggingFace).
+- **GPT-4** as the response generator (via OpenAI API).
+- **ChromaDB** for fast vector storage and retrieval.
+- **Streamlit** for frontend deployment.
+- **LangChain** for orchestrating query pipelines.
+
+> This project separates retrieval and generation.
+
+> Please feel free to checkout the various ReadMe's located throughout the folders for in-depth discussion. (inside `src` & `src/testing`)
 
 ## **Installation**
 
@@ -20,15 +33,7 @@ Follow the steps below to set up your chatbot:
 
 3. **Install other files**
 
-   Sometimes, manual installations are required. For the following lines of code, please copy and paste each line into the terminal in the order given.
-
-   ```bash
-   pip install langchain
-
-   pip install -U langchain-community
-
-   pip install openai chromadb streamlit pypdf2 tiktoken nltk python-docx
-   ```
+   Sometimes, manual installations are required. Install as necessary.
 
 4. **Set up your OpenAI API key**
 
@@ -53,7 +58,7 @@ Follow the steps below to set up your chatbot:
 To use Quanta Chatbot, follow these steps:
 
 1. Ensure all dependencies are installed and OpenAI API key is incorporated into the file.
-2. Run the main.py file using the following command.
+2. Run the main.py file using the following command at QuantaBot (most oustide) directory.
 
    ```bash
    streamlit run main.py

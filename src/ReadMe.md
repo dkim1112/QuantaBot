@@ -2,7 +2,7 @@
 
 ## Problem 1: Persistent Confusion from Old Documents
 
-### 🔍 The Problem
+### The Problem
 
 One crucial issue I consistently encountered was this:
 
@@ -45,14 +45,14 @@ But in practice, this conflicted with the current retrieval (top-k) method:
 
 To fix this issue, I made the system **reset the vector database** before each new upload (session).
 
-- The solution: **Clear the ChromaDB vector store before every new session is processed**
+- The solution: **Clear the ChromaDB vector store before every new session is processed.**
 
 As a result,
 
 - This prevents accumulation and ensures only the **current documents** are used in retrieval
 - I also implemented **automatic discarding of local ChromaDB files after each session**, so it doesn’t unnecessarily grow over time
 
-I acknowledge that this approach will then limit only the currently uploaded documents. However, I discuss about this further in the **Future Work** section.
+I acknowledge that this approach will then limit to only the currently uploaded documents. However, I discuss about this further in the **Future Work** section.
 
 ### Future Work & Smarter Retrieval
 
@@ -144,7 +144,7 @@ While BERT has worked well so far, I could consider hybrid options:
 
 When I first started building the chatbot, my intuition was to use a **summarization-first pipeline**.
 
-> In easy terms, I was thinking of making summary of summaries to deal with the massive amount of data (our intended purpose of making this chatbot).
+> In easy terms, I was thinking of making _summary of summaries_ to deal with the massive amount of data (our intended purpose of making this chatbot).
 
 So, I used a **`map_reduce` summarization strategy**:
 
