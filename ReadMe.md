@@ -84,13 +84,13 @@ While running the program, various errors might occur. If so, make sure to try t
    pip install --upgrade <dependency being updated>
    ```
 
-3. Ensure that your OpenAI has enough credit balance, else it won't be making successful API calls. This can be checked at (platform.openai.com)
+3. Ensure that your OpenAI has enough credit balance, else it won't be making successful API calls. This can be checked [here.](platform.openai.com)
 4. Make sure to search up the error message that appears on the terminal window.
 5. Hand type the terminal commands, instead of copying and pasting.
 
 ## **[Testing] Model Evaluation and Diagnostic Tools**
 
-Before developing the main chatbot interface, this section shows how the internal components of the retrieval system were tested and evaluated independently. By running a series of experiments-including statistical visualizations, metric-based comparisons, and LangChain evaluations - I aim to identify the most effective configurations for semantic search and information retrieval. This includes analyzing embeddings, scoring methods like F1, NDCG, MRR, Recall@K, and evaluating the trade-offs between accuracy, speed, and memory efficiency across various approaches.
+Before developing the main chatbot interface, this section shows how the internal components of the retrieval system were tested and evaluated independently. By running a series of experiments - including statistical visualizations, metric-based comparisons, and LangChain evaluations - I aim to identify the most effective configurations for semantic search and information retrieval. This includes analyzing embeddings, scoring methods like F1, NDCG, MRR, Recall@K, and evaluating the trade-offs between accuracy, speed, and memory efficiency across various approaches.
 
 > ℹ️ **Note**  
 > All files and descriptions relevant to testing can be found in the `src/testing` directory.
