@@ -17,4 +17,4 @@ def calculate_optimal_batch(summaries: list, estimate_tokens_func) -> int:
     avg_tokens_per_summary = total_tokens / sample_size
 
     optimal_size = max(1, int(TARGET_TOKENS_PER_BATCH / avg_tokens_per_summary))
-    return min(max(optimal_size, 2), 20)  # Between 2 and 20 summaries per batch
+    return min(max(optimal_size, 2), 20) # Between 2 and 20 summaries per batch

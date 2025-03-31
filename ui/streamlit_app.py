@@ -1,91 +1,139 @@
 import streamlit as st
 from src.core.quanta import Quanta
+import uuid
+import atexit
+import shutil
+import tempfile
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+# this needs to stay on top of any other file! (streamlit rule)
+st.set_page_config(page_title="Quanta Chatbot", layout="wide")
+st.markdown("""
+    <style>
+    section.main > div {
+        max-width: none !important;
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+def cleanup_chroma_folder(path):
+    def _cleanup():
+        shutil.rmtree(path, ignore_errors=True)
+        print(f"🧹 Deleted Chroma folder: {path}")
+    return _cleanup
 
 def streamlit_ui():
-    # Set up the Streamlit app title
-    st.title("Quanta-Bot [In-Development]")
+    st.title("Quanta: Research-Aware Chatbot")
 
-    # Initialize Quanta instance
-    quanta = Quanta()
+    # -- Initialize session state for file and persistence --
+    if "files" not in st.session_state:
+        st.session_state["files"] = None
 
-    # Initialize session state variables
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    if "file" not in st.session_state:
-        st.session_state["file"] = None
-    if "preprocessed" not in st.session_state:
-        st.session_state["preprocessed"] = False
+    if "persist_directory" not in st.session_state:
+        st.session_state["persist_directory"] = None
 
-    # File uploader section
-    file = st.file_uploader(
-        "Upload one or more documents (.txt, .pdf, .docx)",
-        type=["txt", "pdf", "docx"],
-        accept_multiple_files=True,
-        key="file_uploader_unique_key"
-    )
+    if "collection_name" not in st.session_state:
+        st.session_state["collection_name"] = f"collection_{uuid.uuid4().hex[:8]}"
 
-    # Save uploaded file(s) to session state
-    if file != st.session_state["file"]:
-        st.session_state["file"] = file
-        st.session_state["preprocessed"] = False  # Reset preprocessed state when new files are uploaded
+    if "quanta" not in st.session_state:
+        st.session_state["quanta"] = None
 
-    # Preprocessing section
-    if st.session_state["file"]:
-        if not st.session_state["preprocessed"]:
-            if st.button("Preprocess Documents"):
-                try:
-                    with st.spinner("Preprocessing documents..."):
-                        quanta.preprocess_pipeline(st.session_state["file"])
-                    st.session_state["preprocessed"] = True
-                    st.success("Documents preprocessed successfully!")
-                except Exception as e:
-                    st.error(f"Error during preprocessing: {str(e)}")
+    if "chat_history" not in st.session_state:
+        st.session_state["chat_history"] = []
+
+    # -- Sidebar file upload --
+    st.sidebar.header("Upload PDF/DOCX/TXT Files")
+    # uploader_key = f"quanta_file_uploader_{st.session_state.get('some_unique_id', 'default')}"
+
+    files = st.sidebar.file_uploader("Upload Documents", type=["pdf", "txt"], accept_multiple_files=True, key="quanta_file_uploader")
+
+    if files:
+        if files != st.session_state["files"]:
+            st.session_state["files"] = files
+            # Generate new persist_dir and collection for new upload
+            st.session_state["persist_directory"] = None
+            st.session_state["collection_name"] = f"collection_{uuid.uuid4().hex[:8]}"
+            st.session_state["quanta"] = None # reset instance
+            st.session_state["chat_history"] = [] # reset chat history for new doc
+    else:
+        st.session_state["files"] = None
+
+    # -- Preprocessing --
+    if st.button("Preprocess Document"):
+        if st.session_state["files"] is None:
+            st.warning("Please upload a document first.")
         else:
-            st.success("Documents are preprocessed and ready for querying!")
-    else:
-        st.warning("Please upload a document to start your chat.")
+            try:
+                with st.spinner("Preprocessing documents..."):
+                    quanta = Quanta(
+                        collection_name=st.session_state["collection_name"]
+                    )
+                    # Convert UploadedFile objects to a usable list
+                    file_list = [f for f in st.session_state["files"] if hasattr(f, "read") and hasattr(f, "name")]
 
-    # Display previous messages
-    for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+                    # Save uploaded files to temp files before passing to Quanta
+                    temp_file_paths = []
+                    for f in file_list:
+                        suffix = os.path.splitext(f.name)[1]
+                        f.seek(0)  # Ensure we read from the start of the file
+                        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                            tmp.write(f.read())
+                            tmp.flush()
+                            temp_file_paths.append(tmp.name)
+                    quanta.preprocess_pipeline(temp_file_paths)
+                    st.session_state["quanta"] = quanta
 
-    # Chat input section
-    if st.session_state["file"] and st.session_state["preprocessed"]:
-        prompt = st.chat_input("Ask Quanta something...", key="chat_input_enabled")
-    else:
-        prompt = st.chat_input(
-            "Please upload and preprocess documents first...", 
-            disabled=True, 
-            key="chat_input_disabled"
-        )
+                    # register cleanup to run after Streamlit exits
+                    if hasattr(quanta, "persist_directory") and quanta.persist_directory:
+                        atexit.register(cleanup_chroma_folder(quanta.persist_directory))
 
-    # Process user input
-    if prompt:
-        # Add and display user message
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+                    st.success("✅ Document processed and indexed!")
+            except Exception as e:
+                st.error(f"❌ Error during preprocessing: {e}")
 
-        try:
-            # Process the query
-            with st.spinner("Processing your query..."):
-                if "summarize" in prompt.lower():
-                    response = quanta.summary_tool(st.session_state["file"])
-                else:
-                    response = quanta.query_pipeline(prompt)
+    # -- User Query (Question) Input --
+    st.subheader("Ask a Question")
 
-            # Display assistant response
-            with st.chat_message("assistant"):
-                st.markdown(response)
+    documents_uploaded = st.session_state.get("files") is not None
+    documents_processed = st.session_state.get("quanta") is not None
+    ready_for_questions = documents_uploaded and documents_processed
+    
+    user_query = st.text_input("What would you like to ask about the document(s)?", disabled=not ready_for_questions)
 
-            # Add assistant message to session state
-            st.session_state.messages.append({"role": "assistant", "content": response})
+    if st.button("Get Answer", disabled=not ready_for_questions):
+        if not user_query.strip():
+            st.warning("Please enter a question.")
+        else:
+            quanta = st.session_state.get("quanta")
+            if quanta is None:
+                st.error("Please preprocess a document first.")
+                st.stop()
 
-        except Exception as e:
-            with st.chat_message("assistant"):
-                error_message = f"Error processing query: {str(e)}"
-                st.error(error_message)
-            st.session_state.messages.append({"role": "assistant", "content": error_message})
+            try:
+                with st.spinner("Thinking..."):
+                    answer = quanta.query_pipeline(user_query)
 
-streamlit_ui()
+                # Save Q&A to chat history
+                st.session_state["chat_history"].append({
+                    "question": user_query,
+                    "answer": answer
+                })
+
+                st.markdown("**Answer:**")
+                st.write(answer)
+            except Exception as e:
+                st.error(f"❌ Error processing query: {e}")
+
+    # -- Display Chat History --
+    if st.session_state["chat_history"]:
+        st.markdown("---")
+        with st.expander("**Chat History**", expanded=False): # the expanded stores in default state
+            for i, entry in enumerate((st.session_state["chat_history"])):
+                st.markdown(f"**Q{i+1}:** {entry['question']}")
+                st.markdown(f"**A{i+1}:** {entry['answer']}")
+
+if __name__ == "__main__":
+    streamlit_ui()

@@ -1,6 +1,6 @@
 from ui.streamlit_app import streamlit_ui
-import nltk
-nltk.download("punkt")
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 if __name__ == "__main__":
     streamlit_ui()
@@ -13,4 +13,3 @@ if __name__ == "__main__":
 # DONE : UI Streamlit Revision
 # DONE : Implement cosine similarity logic, reduction techniques, and more.
 # AND MUCH MORE...
-
