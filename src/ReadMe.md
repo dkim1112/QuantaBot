@@ -158,8 +158,6 @@ This method worked to a degree, but it **restricted the chatbot’s capabilities
 - Lost too many information at times, and it was hard to determind "how much" to summarize, as it differs based on the file size uploaded.
 - If the summary missed a nuance, the bot couldn't retrieve it
 
----
-
 ### The Problem With That Approach
 
 As mentioned above,
@@ -167,8 +165,6 @@ As mentioned above,
 1. **Loss of Detail**: Important technical or nuanced points were lost in summarization layers.
 2. **Static Summaries**: Every query used the same static summary, even if the query was specific.
 3. **Poor Relevance for QA**: The system couldn't get into precise sections of the document.
-
----
 
 ### ✅ New Approach: Chunked Retrieval + GPT-4 Response (RAG)
 
@@ -203,8 +199,6 @@ In my current architecture (see `quanta.py`):
   def generate_response(self, query, chunks):
       # ... inject into prompt and call self.llm.invoke(prompt)
   ```
-
----
 
 ### Why New Approach Is More Effective
 
