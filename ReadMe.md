@@ -13,7 +13,7 @@ Quanta Chatbot is a Python application designed to handle multiple files (PDF/DO
 
 > This project separates retrieval and generation.
 
-> Please feel free to checkout the various ReadMe's located throughout the folders for in-depth discussion. (inside `src` & `src/testing`)
+> Please feel free to checkout the various ReadMe's located throughout the folders for in-depth discussion. (inside `src`, `src/testing`, `src/testing/comparison`, and `src/testing/add_langchain`)
 
 ## **Installation**
 
