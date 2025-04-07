@@ -2,7 +2,8 @@ import uuid
 import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-from langchain_chroma import Chroma
+# from langchain_chroma import Chroma (IMPORT ERROR)
+from langchain.vectorstores import Chroma
 from langchain.prompts import PromptTemplate
 
 from ..utils.embedding_wrapper import HuggingFaceEmbeddings
