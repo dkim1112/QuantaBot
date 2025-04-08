@@ -26,7 +26,7 @@ def cleanup_chroma_folder(path):
     return _cleanup
 
 def streamlit_ui():
-    st.title("Quanta: Research-Aware Chatbot")
+    st.title("Quanta: Research-Aware Assistant")
 
     # -- Initialize session state for file and persistence --
     if "files" not in st.session_state:
