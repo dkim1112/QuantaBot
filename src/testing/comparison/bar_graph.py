@@ -41,7 +41,7 @@ for i, metric in enumerate(metrics):
 key_ax = axes[0]
 key_ax.axis("off")
 key_ax.text(0, 1.0, "Metric Key", fontsize=15, fontweight="bold")
-key_ax.text(0, 0.85, "F1-score:     Balance Precision and Recall", fontsize=12)
+key_ax.text(0, 0.85, "F1-score:    Balance Precision and Recall", fontsize=12)
 key_ax.text(0, 0.70, "NDCG:        Ranked Relevance Quality", fontsize=12)
 key_ax.text(0, 0.55, "Recall@5:   Top-5 Result Coverage", fontsize=12)
 key_ax.text(0, 0.40, "MRR:          First Relevant Answer Ranking", fontsize=12)
