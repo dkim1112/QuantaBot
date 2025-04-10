@@ -51,5 +51,5 @@ To verify whether LangChain’s improvements were **statistically significant**,
 To better understand and compare results, the following script was used:
 
 - **`violin_plot.py`**  
-   This violin plot compares the distribution of retrieval performance metrics (NDCG, F1, MRR, Recall@5) between Baseline BERT and LangChain.
-  <img src="violin_plot.png" alt="BERT vs. LangChain" width="500"/>
+   This violin plot compares the distribution of retrieval performance metrics (NDCG, F1, MRR, Recall@5) between Baseline BERT and LangChain.  
+   <img src="violin_plot.png" alt="BERT vs. LangChain" width="500"/>
