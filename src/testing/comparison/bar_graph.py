@@ -12,7 +12,7 @@ df = pd.read_csv("embeddings_all_metrics.csv")
 df["method"] = df["model"] + " (" + df["similarity"] + ")"
 
 # Metrics to plot
-metrics = ['NDCG_mean', 'F1_mean', 'MRR_mean', 'Recall@5_mean', 'Time_ms_mean']
+metrics = ['NDCG_mean', 'Recall@5_mean', 'MRR_mean','F1_mean', 'Time_ms_mean']
 
 # Plot grouped bars for L2 vs Cosine per model
 fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(16, 12))
