@@ -19,12 +19,14 @@ merged_df = pd.merge(
 f1_ttest = ttest_rel(merged_df["F1_langchain"], merged_df["F1_baseline"])
 ndcg_ttest = ttest_rel(merged_df["NDCG_langchain"], merged_df["NDCG_baseline"])
 mrr_ttest = ttest_rel(merged_df["MRR_langchain"], merged_df["MRR_baseline"])
+r5_ttest = ttest_rel(merged_df["Recall@5_langchain"], merged_df["Recall@5_baseline"])
 
 # Show result of p-value
 print("Paired T-Test Results:\n")
 print(f"F1:    p = {f1_ttest.pvalue:.5f} | baseline = {merged_df['F1_baseline'].mean():.4f} | langchain = {merged_df['F1_langchain'].mean():.4f}")
 print(f"NDCG:  p = {ndcg_ttest.pvalue:.5f} | baseline = {merged_df['NDCG_baseline'].mean():.4f} | langchain = {merged_df['NDCG_langchain'].mean():.4f}")
 print(f"MRR:   p = {mrr_ttest.pvalue:.5f} | baseline = {merged_df['MRR_baseline'].mean():.4f} | langchain = {merged_df['MRR_langchain'].mean():.4f}")
+print(f"Recall@5:   p = {r5_ttest.pvalue:.5f} | baseline = {merged_df['Recall@5_baseline'].mean():.4f} | langchain = {merged_df['Recall@5_langchain'].mean():.4f}")
 
 # INSIGHTS
 # We've done: Baseline (NLI-Roberta) vs Addition of LangChain (VectorDB)
@@ -33,16 +35,18 @@ print(f"MRR:   p = {mrr_ttest.pvalue:.5f} | baseline = {merged_df['MRR_baseline'
 
 # Showing Bar Plot
 sns.set_theme(style="whitegrid")
-metrics = ["F1", "NDCG", "MRR"]
+metrics = ["F1", "NDCG", "MRR", "Recall@5"]
 baseline_means = [
     merged_df["F1_baseline"].mean(),
     merged_df["NDCG_baseline"].mean(),
-    merged_df["MRR_baseline"].mean()
+    merged_df["MRR_baseline"].mean(),
+    merged_df["Recall@5_baseline"].mean()
 ]
 langchain_means = [
     merged_df["F1_langchain"].mean(),
     merged_df["NDCG_langchain"].mean(),
-    merged_df["MRR_langchain"].mean()
+    merged_df["MRR_langchain"].mean(),
+    merged_df["Recall@5_langchain"].mean()
 ]
 
 x = range(len(metrics))
