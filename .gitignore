@@ -8,3 +8,12 @@ chroma_*
 .DS_Store
 *.log
 temp_*
+
+# Streamlit secrets - DO NOT COMMIT
+.streamlit/secrets.toml
+secrets.toml
+
+# API keys and sensitive files
+*.key
+.env.local
+.env.production

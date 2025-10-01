@@ -4,18 +4,18 @@ import numpy as np
 from typing import List, Optional, Dict, Any
 
 # LangChain imports
-from langchain.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain.retrievers import MultiQueryRetriever, EnsembleRetriever, ParentDocumentRetriever
 from langchain.retrievers.document_compressors import CrossEncoderReranker
 from langchain.retrievers.contextual_compression import ContextualCompressionRetriever
 from langchain.storage import InMemoryStore
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from langchain.memory import ConversationSummaryBufferMemory
-from langchain.schema.runnable import RunnablePassthrough
-from langchain.schema import Document
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.documents import Document
 from langchain_core.callbacks import BaseCallbackHandler
 from langchain_community.retrievers import BM25Retriever
 

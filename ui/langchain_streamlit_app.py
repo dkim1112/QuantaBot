@@ -9,6 +9,23 @@ import time
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
+# Check for OpenAI API key
+def check_openai_key():
+    """Check if OpenAI API key is available"""
+    api_key = None
+
+    # Try to get from Streamlit secrets first (for cloud deployment)
+    try:
+        api_key = st.secrets["openai"]["api_key"]
+    except KeyError:
+        # Try environment variable
+        api_key = os.getenv("OPENAI_API_KEY")
+
+    if api_key:
+        os.environ["OPENAI_API_KEY"] = api_key
+        return True
+    return False
+
 # Streamlit configuration
 st.set_page_config(page_title="QuantaBot", layout="wide")
 st.markdown("""
@@ -35,6 +52,13 @@ def cleanup_chroma_folder(path):
 
 def streamlit_ui():
     st.title("QuantaBot: Research-Aware Assistant")
+
+    # Check for OpenAI API key
+    if not check_openai_key():
+        st.error("🔑 OpenAI API key not found! Please add your API key to Streamlit secrets or environment variables.")
+        st.info("For Streamlit Cloud: Add your API key in the app's secrets under `[openai]` -> `api_key`")
+        st.info("For local development: Set the `OPENAI_API_KEY` environment variable")
+        st.stop()
 
     # Initialize session state for LangChain components
     if "files" not in st.session_state:
