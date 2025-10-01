@@ -8,7 +8,7 @@ import os
     
 class DocumentProcessor:
     @staticmethod
-    def chunk_documents(files, document_store, chunk_size=500, chunk_overlap=100):
+    def chunk_documents(files, document_store, chunk_size=1200, chunk_overlap=200):
 
         def _flatten(lst):
             for item in lst:
@@ -45,7 +45,8 @@ class DocumentProcessor:
             text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=chunk_size,
                 chunk_overlap=chunk_overlap,
-                separators=["\n\n", "\n", ".", " "], # Prioritize meaningful splits
+                separators=["\n\n", "\n", ". ", "! ", "? ", "; ", ", ", " "], # Prioritize meaningful splits
+                keep_separator=True, # Preserve separators for context
             )
             raw_chunks = text_splitter.split_documents(documents)
             processed_chunks = DocumentProcessor.adjust_chunk_boundaries(raw_chunks)
@@ -65,15 +66,26 @@ class DocumentProcessor:
     
     @staticmethod
     def adjust_chunk_boundaries(chunks):
-        """Ensures chunks end at full sentences to avoid cut-off issues."""
+        """Ensures chunks end at full sentences and maintains semantic coherence."""
         adjusted_chunks = []
         for chunk in chunks:
             text = chunk.page_content.strip()
-            last_period = max(text.rfind("."), text.rfind("?"), text.rfind("!")) # Find last full stop
-            if last_period != -1 and last_period < len(text) - 5: # Ensure the period is meaningful
-                text = text[:last_period + 1] # Trim at the last full stop
-            
-            # Recreate the Document instance to preserve metadata
-            adjusted_chunk = Document(page_content=text, metadata=chunk.metadata)
-            adjusted_chunks.append(adjusted_chunk)
+
+            # Find the best sentence ending position
+            sentence_endings = []
+            for pattern in [". ", "! ", "? "]:
+                pos = text.rfind(pattern)
+                if pos != -1 and pos < len(text) - 2:  # Not at the very end
+                    sentence_endings.append(pos + 1)  # Include the punctuation
+
+            if sentence_endings:
+                # Choose the latest sentence ending that's not too close to the end
+                best_ending = max(sentence_endings)
+                if best_ending > len(text) * 0.8:  # If it's more than 80% through the text
+                    text = text[:best_ending + 1]
+
+            # Only keep chunks that have meaningful content
+            if len(text.strip()) > 50:  # Minimum chunk size
+                adjusted_chunk = Document(page_content=text, metadata=chunk.metadata)
+                adjusted_chunks.append(adjusted_chunk)
         return adjusted_chunks

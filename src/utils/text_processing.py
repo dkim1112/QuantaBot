@@ -2,12 +2,22 @@ import re
 import ast
 from langchain.docstore.document import Document
 
-# The better this is written, the cleaner text becomes (less noisy)
 def preprocess_text(text):
-    text = re.sub(r"\s+", " ", text) # Normalize spaces
-    text = re.sub(r"[\n\r]+", " ", text) # Remove line breaks
-    text = re.sub(r"[^a-zA-Z0-9.,!?()\"'\\-]", " ", text) # Keep all readable symbols
-    text = re.sub(r"\s{2,}", " ", text) # Remove excessive spaces
+    # Preserve important academic formatting patterns
+    text = re.sub(r"\n{3,}", "\n\n", text)  # Keep paragraph breaks but limit to double
+    text = re.sub(r"[ \t]+", " ", text)  # Normalize spaces and tabs
+
+    # Preserve important punctuation and symbols while removing excessive noise
+    text = re.sub(r"[^\w\s.,!?()\"';:/@#$%&*+\-=\[\]{}|\\<>~`]", " ", text)
+    # Clean up excessive whitespace but preserve structure
+    text = re.sub(r"[ ]{3,}", "  ", text)  # Limit excessive spaces to double
+    text = re.sub(r"\n[ ]+", "\n", text)  # Remove spaces after newlines
+    text = re.sub(r"[ ]+\n", "\n", text)  # Remove spaces before newlines
+
+    # Preserve some formatting for better context
+    text = re.sub(r"(\d+\.)\s*", r"\1 ", text)  # Normalize numbered lists
+    text = re.sub(r"([.!?])\s*([A-Z])", r"\1 \2", text)  # Ensure space after sentences
+
     return text.strip()
 
 def str_to_document(text: str):

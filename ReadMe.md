@@ -1,6 +1,27 @@
-# **Introduction**
+# **QuantaBot: Advanced LangChain RAG System**
 
-Quanta Chatbot is a Python application designed to handle multiple files (PDF/DOC/TXT) for in-depth discussions. It specializes in working with research papers or lengthy documents, providing precise and contextually relevant response to user questions based on document content(s). Initially, it was built to aid researchers/professors associated in Department of Dermatology at the University of Michigan.
+QuantaBot is a sophisticated Python application designed to handle large documents (PDF/DOCX/TXT) for in-depth research discussions. It specializes in working with research papers or lengthy documents, providing precise and contextually relevant response to user questions based on document content(s). Initially, it was built to aid researchers/professors associated in Department of Dermatology at the University of Michigan.
+
+**FILE STRUCTURE:**
+
+```
+QuantaBot/
+  ├── src/
+  │   ├── ReadMe.md
+  │   ├── core/
+  │   │   ├── langchain_quanta.py            # LangChain RAG system
+  │   │   └── llm.py                         # OpenAI wrapper
+  │   ├── loaders/
+  │   │   ├── ... various loaders
+  │   ├── utils/
+  │   │   ├── document_processor.py          # Optimized chunking
+  │   │   ├── embedding_wrapper.py           # MPNet embeddings
+  │   │   └── text_processing.py             # Text preprocessing
+  │   └── testing/
+  │       ├── ... various testing
+  └── ui/
+      └── langchain_streamlit_app.py         # Streamlit interface
+```
 
 ### Core Technologies
 
@@ -10,6 +31,35 @@ Quanta Chatbot is a Python application designed to handle multiple files (PDF/DO
 - **ChromaDB** for fast vector storage and retrieval.
 - **Streamlit** for frontend deployment.
 - **LangChain** for orchestrating query pipelines.
+
+### Advanced LangChain Features
+
+#### Retriever Types
+
+- **Small documents** (< 20 chunks): Uses ContextualCompressionRetriever
+- **Large documents** (>= 20 chunks): Uses EnsembleRetriever with BM25
+
+- **MultiQueryRetriever**
+  - Automatic query expansion using GPT-4
+- **EnsembleRetriever**
+  - Hybrid semantic (vector embeddings) + BM25 keyword search
+- **ParentDocumentRetriever**
+  - Retrieves small, focused chunks for relevance
+  - Provides large parent documents for full context
+- **CrossEncoderReranker**
+  - Advanced relevance scoring using dedicated reranking model
+  - More accurate than simple cosine similarity
+  - Optimizes final document selection
+- **ConversationMemory**
+  - Professional conversation context management
+  - Maintains relevant history while managing token limits
+  - Enables natural follow-up questions
+- **Advanced Monitoring**
+  - Built-in callbacks for performance tracking
+  - Detailed retrieval statistics
+  - Real-time system monitoring
+- **MPNet Embeddings**
+  - Up to 768-dimensional embeddings
 
 > This project separates retrieval and generation.
 
@@ -58,11 +108,13 @@ Follow the steps below to set up your chatbot:
 To use Quanta Chatbot, follow these steps:
 
 1. Ensure all dependencies are installed and OpenAI API key is incorporated into the file.
-2. Run the main.py file using the following command at QuantaBot (most oustide) directory.
+2. Run the main.py file using the following command at QuantaBot (most outside) directory.
 
    ```bash
    streamlit run main.py
    ```
+
+   This launches the **Advanced LangChain RAG System** interface.
 
 3. A page will be launched on your default web browser.
 
