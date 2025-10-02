@@ -119,9 +119,11 @@ class LangChainQuantaBot:
         # Note: This will be populated during document processing
 
         # 4. Add cross-encoder reranking
+        from langchain_community.cross_encoders import HuggingFaceCrossEncoder
+        cross_encoder_model = HuggingFaceCrossEncoder(model_name="cross-encoder/ms-marco-MiniLM-L-6-v2")
         compressor = CrossEncoderReranker(
-            model=CrossEncoderReranker.get_default_model(),
-            top_k=12
+            model=cross_encoder_model,
+            top_n=12
         )
 
         # 5. Create contextual compression retriever

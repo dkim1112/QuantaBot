@@ -17,7 +17,7 @@ def check_openai_key():
     # Try to get from Streamlit secrets first (for cloud deployment)
     try:
         api_key = st.secrets["openai"]["api_key"]
-    except KeyError:
+    except (KeyError, FileNotFoundError, st.errors.StreamlitAPIException):
         # Try environment variable
         api_key = os.getenv("OPENAI_API_KEY")
 
