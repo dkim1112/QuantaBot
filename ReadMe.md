@@ -1,6 +1,6 @@
 # **QuantaBot: Advanced LangChain RAG System**
 
-QuantaBot is a sophisticated Python application designed to handle large documents (PDF/DOCX/TXT) for in-depth research discussions. It specializes in working with research papers or lengthy documents, providing precise and contextually relevant response to user questions based on document content(s). Initially, it was built to aid researchers/professors associated in Department of Dermatology at the University of Michigan.
+QuantaBot is a sophisticated Python application designed to handle large documents (PDF/TXT/DOCX) for in-depth research discussions. It specializes in working with research papers or lengthy documents, providing precise and contextually relevant response to user questions based on document content(s), along with citations. Initially, it was built to aid researchers/professors associated in Department of Dermatology at the University of Michigan.
 
 **FILE STRUCTURE:**
 

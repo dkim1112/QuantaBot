@@ -8,8 +8,7 @@ import os
     
 class DocumentProcessor:
     @staticmethod
-    def chunk_documents(files, document_store, chunk_size=1200, chunk_overlap=200):
-
+    def chunk_documents(files, document_store, chunk_size=1200, chunk_overlap=200, file_mapping=None):
         def _flatten(lst):
             for item in lst:
                 if isinstance(item, list):
@@ -25,20 +24,24 @@ class DocumentProcessor:
             if isinstance(file, str):
                 file_path = file
                 file_name = os.path.basename(file_path)
+
+                # Get original filename from mapping if available
+                original_filename = None
+                if file_mapping and file_path in file_mapping:
+                    original_filename = file_mapping[file_path]
             else:
                 raise ValueError("Expected file path as string, got something else.")
 
             # Load and write the documents into the ChromaDB document store.
             if file_name.endswith(".docx"):
-                loader = CustomDocsLoader(file_path)
+                loader = CustomDocsLoader(file_path, original_filename)
                 documents = loader.load()
             elif file_name.endswith(".txt"):
-                loader = CustomTextLoader(file_path)
+                loader = CustomTextLoader(file_path, original_filename)
                 documents = loader.load()
             elif file_name.endswith(".pdf"):
-                loader = CustomPDFLoader(file_path)
+                loader = CustomPDFLoader(file_path, original_filename)
                 documents = loader.load()
-            # Defensive programming
             else:
                 raise ValueError(f"Unsupported file type: {file_name}")
 
@@ -58,9 +61,9 @@ class DocumentProcessor:
                 document = Document(page_content=processed_text, metadata=metadata)
                 all_docs.append(document)
 
-            # Add documents to the document store
-            document_store.add_documents(all_docs)
-            
+        # Add all documents to the document store once at the end
+        document_store.add_documents(all_docs)
+
         # We are returning a full set of chunks that combined all the files uploaded into one.
         return all_docs
     

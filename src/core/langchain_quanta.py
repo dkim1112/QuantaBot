@@ -115,10 +115,7 @@ class LangChainQuantaBot:
             include_original=True
         )
 
-        # 3. Create BM25 retriever for keyword search
-        # Note: This will be populated during document processing
-
-        # 4. Add cross-encoder reranking
+        # 3. Add cross-encoder reranking
         from langchain_community.cross_encoders import HuggingFaceCrossEncoder
         cross_encoder_model = HuggingFaceCrossEncoder(model_name="cross-encoder/ms-marco-MiniLM-L-6-v2")
         compressor = CrossEncoderReranker(
@@ -126,7 +123,7 @@ class LangChainQuantaBot:
             top_n=12
         )
 
-        # 5. Create contextual compression retriever
+        # 4. Create contextual compression retriever
         compression_retriever = ContextualCompressionRetriever(
             base_compressor=compressor,
             base_retriever=multi_query_retriever,
@@ -155,16 +152,37 @@ class LangChainQuantaBot:
         # Combine retrievers with weights
         ensemble_retriever = EnsembleRetriever(
             retrievers=[semantic_retriever, bm25_retriever],
-            weights=[0.7, 0.3],  # Favor semantic search slightly
+            weights=[0.7, 0.3], # Favor semantic search slightly
             callbacks=[self.callback_handler]
         )
 
         return ensemble_retriever
 
+    def format_documents(self, documents):
+        """Custom document formatter that includes filename and page info for proper citations."""
+        formatted_docs = []
+        for i, doc in enumerate(documents, 1):
+            filename = doc.metadata.get("filename", "Unknown Document")
+            page = doc.metadata.get("page", "N/A")
+
+            # Skip documents with empty metadata or unknown filenames
+            if not doc.metadata or filename == "Unknown Document":
+                # Still include the content but without source info for the LLM
+                formatted_doc = f"{doc.page_content}\n"
+            else:
+                if page != "N/A":
+                    source_info = f"[Source: {filename}, page {page}]"
+                else:
+                    source_info = f"[Source: {filename}]"
+                formatted_doc = f"{source_info}\n{doc.page_content}\n"
+
+            formatted_docs.append(formatted_doc)
+
+        return "\n---\n".join(formatted_docs)
+
     def create_rag_chain(self):
         """Create a proper RAG chain using LangChain's create_retrieval_chain."""
 
-        # Create the prompt template
         system_prompt = """
         You are a highly capable AI research assistant specializing in academic analysis.
         You have access to carefully selected and reranked document chunks that are highly relevant to the user's query.
@@ -177,19 +195,20 @@ class LangChainQuantaBot:
         - Provide detailed, specific answers with examples, numbers, and quotes when available
         - Structure your response clearly with headings or bullet points when appropriate
         - If information is insufficient, clearly state what's missing rather than guessing
+        - ALWAYS include citations for your sources using the exact source information provided in the context
 
         YOUR RESPONSE SHOULD FOLLOW THESE PROTOCOLS:
         1. Context Analysis:
         - Carefully analyze the provided context to understand its relevance to the query.
         - Identify key themes, arguments, or data points that directly relate to the query.
-        
+
         2. Query Understanding:
         - Ensure that the query is fully understood. If the query is ambiguous, identify potential interpretations and choose the most logical one based on the context.
         - Address the query based on its scope – whether it requires a direct answer, an in-depth analysis, or a synthesis of the information.
 
         3. Answer Construction:
         - Formulate a clear, logically structured response using precise and formal academic language.
-        - The answer should read as a naturally articulated, stand-alone academic explanation - DO NOT INCLUDE ANY META-COMMENTARY (e.g., “the context shows,” “the query asks,” “based on the provided information,” etc.).
+        - The answer should read as a naturally articulated, stand-alone academic explanation - DO NOT INCLUDE ANY META-COMMENTARY (e.g., "the context shows," "the query asks," "based on the provided information," etc.).
         - When sufficient information is available, present a detailed and well-reasoned explanation, incorporating specific insights, data points, and arguments where relevant.
         - Be SPECIFIC with the answers, referring to even the smallest details in the context if relevant.
         - In cases where critical information is missing, enhance the answer using relevant, domain-specific knowledge.
@@ -197,25 +216,47 @@ class LangChainQuantaBot:
         - Use definitions, classifications, or examples to clarify technical terms or complex concepts when appropriate.
         - Use appropriate styling such as bullet points or numbered lists for clarity, especially when presenting multiple points or steps in an argument.
 
-        4. Exceptions and Clarifications:
+        4. Citation Requirements:
+        - Each context section begins with source information in the format [Source: filename, page X] or [Source: filename]
+        - Use EXACTLY this source information when citing - do not create your own citation format
+        - For EVERY piece of information you use from the provided context, include the exact source citation
+        - When you quote directly, use quotation marks and include the citation immediately after: "quoted text" [Source: filename, page X]
+        - At the end of your response, include a "References" section listing all sources cited
+
+        5. Exceptions and Clarifications:
         - If the query or context contains sensitive or ethical considerations, handle these with appropriate sensitivity and discretion.
         - In the case of highly technical or domain-specific subjects, clarify complex terms and concepts to ensure understanding.
-        
+
         Context: {context}
 
         Question: {input}
 
-        Detailed Response:
+        Detailed Response (with citations):
         """
 
         prompt = ChatPromptTemplate.from_messages([
             ("system", system_prompt)
         ])
 
-        # Create document combination chain
-        combine_docs_chain = create_stuff_documents_chain(
-            llm=self.llm,
-            prompt=prompt
+        # Create custom document combination chain with our formatter
+        from langchain_core.runnables import RunnableLambda
+
+        def format_docs_chain(inputs):
+            """Custom chain that formats documents with source info before LLM processing."""
+            documents = inputs["context"]
+            formatted_context = self.format_documents(documents)
+
+            # Create the final prompt input
+            return {
+                "context": formatted_context,
+                "input": inputs["input"]
+            }
+
+        # Create the combine documents chain with custom formatting
+        combine_docs_chain = (
+            RunnableLambda(format_docs_chain)
+            | prompt
+            | self.llm
         )
 
         # Create retrieval chain
@@ -226,7 +267,7 @@ class LangChainQuantaBot:
 
         return self.retrieval_chain
 
-    def preprocess_documents(self, file_paths: List[str], batch_size: int = 10):
+    def preprocess_documents(self, file_paths: List[str], batch_size: int = 10, file_mapping: dict = None):
         """Process documents using LangChain's parent-document pattern."""
 
         file_paths = [item for sublist in file_paths for item in (sublist if isinstance(sublist, list) else [sublist])]
@@ -244,7 +285,8 @@ class LangChainQuantaBot:
                 batch_paths,
                 self.vectorstore,
                 chunk_size=1200,  # Use our optimized chunk size
-                chunk_overlap=200
+                chunk_overlap=200,
+                file_mapping=file_mapping
             )
             all_documents.extend(documents)
 
@@ -280,7 +322,7 @@ class LangChainQuantaBot:
         self.create_rag_chain()
         return all_documents
 
-    def query(self, question: str) -> str:
+    def query(self, question: str) -> dict:
         """Query the LangChain RAG system with conversation memory."""
 
         if self.retrieval_chain is None:
@@ -304,7 +346,11 @@ class LangChainQuantaBot:
             {"output": response["answer"]}
         )
 
-        return response["answer"]
+        # Return both answer and source documents for citations
+        return {
+            "answer": response["answer"],
+            "source_documents": response.get("context", [])
+        }
 
     def get_retrieval_stats(self):
         """Get retrieval statistics for debugging."""

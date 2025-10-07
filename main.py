@@ -4,7 +4,3 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 if __name__ == "__main__":
     streamlit_ui()
-
-# TODO
-# Multiple documents - citation (at least what paper it is from)
-# Deployment via Streamlit

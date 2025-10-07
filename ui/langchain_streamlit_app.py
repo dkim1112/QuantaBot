@@ -26,6 +26,54 @@ def check_openai_key():
         return True
     return False
 
+def check_authentication():
+    """Check if user is authenticated with correct password"""
+    correct_password = None
+
+    try:
+        correct_password = st.secrets["auth"]["password"]
+    except (KeyError, FileNotFoundError, st.errors.StreamlitAPIException):
+        correct_password = os.getenv("APP_PASSWORD", "dongeunkim")
+
+    # Initialize session state for authentication
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+
+    # If not authenticated, show login form
+    if not st.session_state.authenticated:
+        st.title("QuantaBot User Authentication")
+        st.markdown("---")
+
+        with st.container():
+            st.subheader("Please enter the access password:")
+
+            # Password input
+            password_input = st.text_input(
+                "Password",
+                type="password",
+                placeholder="Enter a valid password provided in advance."
+            )
+
+            col1, col2, col3 = st.columns([1, 1, 1])
+            with col2:
+                login_button = st.button("Login", type="primary", use_container_width=True)
+
+            if login_button:
+                if password_input == correct_password:
+                    st.session_state.authenticated = True
+                    st.success("✅ Access granted. Welcome to QuantaBot!")
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error("❌ Incorrect password. Please try again.")
+
+            st.markdown("---")
+            st.info("Contact **dongeunk@umich.edu** for more information about this product.")
+
+        return False
+
+    return True
+
 # Streamlit configuration
 st.set_page_config(page_title="QuantaBot", layout="wide")
 st.markdown("""
@@ -51,13 +99,15 @@ def cleanup_chroma_folder(path):
     return _cleanup
 
 def streamlit_ui():
+    # USER AUTHENTICATION
+    if not check_authentication():
+        st.stop()
+
     st.title("QuantaBot: Research-Aware Assistant")
 
     # Check for OpenAI API key
     if not check_openai_key():
-        st.error("🔑 OpenAI API key not found! Please add your API key to Streamlit secrets or environment variables.")
-        st.info("For Streamlit Cloud: Add your API key in the app's secrets under `[openai]` -> `api_key`")
-        st.info("For local development: Set the `OPENAI_API_KEY` environment variable")
+        st.error("🔑 OpenAI API key not found!")
         st.stop()
 
     # Initialize session state for LangChain components
@@ -79,8 +129,8 @@ def streamlit_ui():
     # File upload section
     st.header("Document Upload & Processing")
     files = st.file_uploader(
-        "Upload PDF/TXT Documents",
-        type=["pdf", "txt"],
+        "Upload PDF/TXT/DOCX Documents",
+        type=["pdf", "txt", "docx"],
         accept_multiple_files=True,
         key="langchain_file_uploader"
     )
@@ -99,7 +149,7 @@ def streamlit_ui():
             st.warning("Please upload documents first.")
         else:
             try:
-                with st.spinner("Processing with LangChain advanced RAG pipeline..."):
+                with st.spinner("Processing with LangChain integrated RAG pipeline..."):
                     start_time = time.time()
 
                     # Initialize LangChain QuantaBot
@@ -107,8 +157,10 @@ def streamlit_ui():
                         collection_name=st.session_state["collection_name"]
                     )
 
-                    # Convert uploaded files to temp files
+                    # Convert uploaded files to temp files while preserving original names
                     temp_file_paths = []
+                    file_mapping = {}  # Map temp paths to original names
+
                     for f in st.session_state["files"]:
                         suffix = os.path.splitext(f.name)[1]
                         f.seek(0)
@@ -116,9 +168,13 @@ def streamlit_ui():
                             tmp.write(f.read())
                             tmp.flush()
                             temp_file_paths.append(tmp.name)
+                            file_mapping[tmp.name] = f.name  # Store original filename
+
+                    # Store file mapping for later use in citations
+                    st.session_state["file_mapping"] = file_mapping
 
                     # Process documents
-                    documents = langchain_quanta.preprocess_documents(temp_file_paths)
+                    documents = langchain_quanta.preprocess_documents(temp_file_paths, file_mapping=file_mapping)
 
                     processing_time = time.time() - start_time
 
@@ -192,7 +248,9 @@ def streamlit_ui():
                     start_time = time.time()
 
                     # Get answer using LangChain RAG
-                    answer = langchain_quanta.query(user_query)
+                    result = langchain_quanta.query(user_query)
+                    answer = result["answer"]
+                    source_documents = result["source_documents"]
 
                     response_time = time.time() - start_time
 
@@ -203,13 +261,52 @@ def streamlit_ui():
                 st.session_state["chat_history"].append({
                     "question": user_query,
                     "answer": answer,
+                    "source_documents": source_documents,
                     "response_time": response_time,
                     "retrieval_stats": retrieval_stats
                 })
 
                 # Display answer
-                st.markdown("### Answer:")
+                st.markdown("### 📝 Answer:")
                 st.write(answer)
+
+                # Display source citations
+                if source_documents:
+                    with st.expander("📚 Source Citations", expanded=True):
+                        st.markdown("**Sources used in this response:**")
+
+                        # Group documents by filename, filtering out unknown sources
+                        sources_by_file = {}
+                        for doc in source_documents:
+                            filename = doc.metadata.get("filename", "Unknown")
+                            page = doc.metadata.get("page", "N/A")
+
+                            # Skip documents with empty metadata or unknown filenames
+                            if not doc.metadata or filename == "Unknown":
+                                continue
+
+                            if filename not in sources_by_file:
+                                sources_by_file[filename] = []
+
+                            sources_by_file[filename].append({
+                                "page": page,
+                                "content": doc.page_content[:200] + "..." if len(doc.page_content) > 200 else doc.page_content
+                            })
+
+                        # Display sources grouped by file
+                        if sources_by_file:
+                            for filename, sources in sources_by_file.items():
+                                st.markdown(f"**📄 {filename}**")
+
+                                for source in sources:
+                                    if source["page"] != "N/A":
+                                        st.markdown(f"- **Page {source['page']}:** {source['content']}")
+                                    else:
+                                        st.markdown(f"- {source['content']}")
+
+                                st.markdown("---")
+                        else:
+                            st.markdown("*No identifiable source citations available for this response.*")
 
                 # Show performance stats
                 with st.expander("📊 Performance Statistics", expanded=False):
@@ -230,12 +327,32 @@ def streamlit_ui():
     # Chat History
     if st.session_state["chat_history"]:
         st.markdown("---")
-        st.header("💬 Conversation History")
+        st.header("Conversation History")
 
         for i, entry in enumerate(reversed(st.session_state["chat_history"])):
             with st.expander(f"Q{len(st.session_state['chat_history'])-i}: {entry['question'][:100]}...", expanded=(i==0)):
                 st.markdown(f"**Question:** {entry['question']}")
                 st.markdown(f"**Answer:** {entry['answer']}")
+
+                # Show source citations if available
+                if "source_documents" in entry and entry["source_documents"]:
+                    st.markdown("**📚 Sources:**")
+                    sources_by_file = {}
+                    for doc in entry["source_documents"]:
+                        filename = doc.metadata.get("filename", "Unknown")
+                        page = doc.metadata.get("page", "N/A")
+
+                        if filename not in sources_by_file:
+                            sources_by_file[filename] = []
+                        sources_by_file[filename].append(page)
+
+                    # Display compact source list
+                    for filename, pages in sources_by_file.items():
+                        if "N/A" not in pages:
+                            pages_str = ", ".join([f"p.{p}" for p in sorted(set(pages)) if p != "N/A"])
+                            st.caption(f"📄 {filename}: {pages_str}")
+                        else:
+                            st.caption(f"📄 {filename}")
 
                 # Show stats if available
                 if "response_time" in entry:
