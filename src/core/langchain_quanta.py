@@ -5,9 +5,20 @@ from typing import List, Optional, Dict, Any
 
 # LangChain imports
 from langchain_chroma import Chroma
-from langchain.retrievers import MultiQueryRetriever, EnsembleRetriever, ParentDocumentRetriever
-from langchain.retrievers.document_compressors import CrossEncoderReranker
-from langchain.retrievers.contextual_compression import ContextualCompressionRetriever
+# Import retrievers from the correct modules in LangChain v0.3+
+try:
+    from langchain.retrievers import MultiQueryRetriever, EnsembleRetriever, ParentDocumentRetriever
+    from langchain.retrievers.document_compressors import CrossEncoderReranker
+    from langchain.retrievers.contextual_compression import ContextualCompressionRetriever
+except ImportError:
+    # Fallback for newer versions
+    try:
+        from langchain_community.retrievers import MultiQueryRetriever, EnsembleRetriever, ParentDocumentRetriever
+        from langchain_community.retrievers.document_compressors import CrossEncoderReranker
+        from langchain_community.retrievers.contextual_compression import ContextualCompressionRetriever
+    except ImportError:
+        # Manual imports as last resort
+        print("Warning: Some retrievers may not be available. Please check your LangChain installation.")
 from langchain.storage import InMemoryStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.chains import create_retrieval_chain
