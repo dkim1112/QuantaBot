@@ -1,6 +1,6 @@
 import re
 import ast
-from langchain.docstore.document import Document
+from langchain_core.documents import Document
 
 def preprocess_text(text):
     # Preserve important academic formatting patterns

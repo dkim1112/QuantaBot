@@ -19,12 +19,51 @@ except ImportError:
     except ImportError:
         # Manual imports as last resort
         print("Warning: Some retrievers may not be available. Please check your LangChain installation.")
-from langchain.storage import InMemoryStore
+# Import storage with fallback for different LangChain versions
+try:
+    from langchain.storage import InMemoryStore
+except ImportError:
+    try:
+        from langchain_community.storage import InMemoryStore
+    except ImportError:
+        try:
+            from langchain_core.storage import InMemoryStore
+        except ImportError:
+            # Use a simple dict as fallback
+            class InMemoryStore(dict):
+                def mget(self, keys):
+                    return [self.get(key) for key in keys]
+                def mset(self, key_value_pairs):
+                    for key, value in key_value_pairs:
+                        self[key] = value
+                def mdelete(self, keys):
+                    for key in keys:
+                        self.pop(key, None)
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+# Import chains with fallback
+try:
+    from langchain.chains import create_retrieval_chain
+    from langchain.chains.combine_documents import create_stuff_documents_chain
+except ImportError:
+    try:
+        from langchain_community.chains import create_retrieval_chain
+        from langchain_community.chains.combine_documents import create_stuff_documents_chain
+    except ImportError:
+        print("Warning: Chain functions may not be available.")
+        create_retrieval_chain = None
+        create_stuff_documents_chain = None
+
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.memory import ConversationSummaryBufferMemory
+
+# Import memory with fallback
+try:
+    from langchain.memory import ConversationSummaryBufferMemory
+except ImportError:
+    try:
+        from langchain_community.memory import ConversationSummaryBufferMemory
+    except ImportError:
+        print("Warning: ConversationSummaryBufferMemory may not be available.")
+        ConversationSummaryBufferMemory = None
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.documents import Document
 from langchain_core.callbacks import BaseCallbackHandler

@@ -1,5 +1,5 @@
 from PyPDF2 import PdfReader
-from langchain.docstore.document import Document
+from langchain_core.documents import Document
 import logging
 
 # Custom loader that uses PdfLoader internally and adds robust error handling.
