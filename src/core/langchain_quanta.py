@@ -3,71 +3,21 @@ import os
 import numpy as np
 from typing import List, Optional, Dict, Any
 
-# LangChain imports
+# LangChain imports - Direct imports for LangChain 0.3+
 from langchain_chroma import Chroma
-# Import retrievers from the correct modules in LangChain v0.3+
-try:
-    from langchain.retrievers import MultiQueryRetriever, EnsembleRetriever, ParentDocumentRetriever
-    from langchain.retrievers.document_compressors import CrossEncoderReranker
-    from langchain.retrievers.contextual_compression import ContextualCompressionRetriever
-except ImportError:
-    # Fallback for newer versions
-    try:
-        from langchain_community.retrievers import MultiQueryRetriever, EnsembleRetriever, ParentDocumentRetriever
-        from langchain_community.retrievers.document_compressors import CrossEncoderReranker
-        from langchain_community.retrievers.contextual_compression import ContextualCompressionRetriever
-    except ImportError:
-        # Manual imports as last resort
-        print("Warning: Some retrievers may not be available. Please check your LangChain installation.")
-# Import storage with fallback for different LangChain versions
-try:
-    from langchain.storage import InMemoryStore
-except ImportError:
-    try:
-        from langchain_community.storage import InMemoryStore
-    except ImportError:
-        try:
-            from langchain_core.storage import InMemoryStore
-        except ImportError:
-            # Use a simple dict as fallback
-            class InMemoryStore(dict):
-                def mget(self, keys):
-                    return [self.get(key) for key in keys]
-                def mset(self, key_value_pairs):
-                    for key, value in key_value_pairs:
-                        self[key] = value
-                def mdelete(self, keys):
-                    for key in keys:
-                        self.pop(key, None)
+from langchain.retrievers import MultiQueryRetriever, EnsembleRetriever, ParentDocumentRetriever
+from langchain.retrievers.document_compressors import CrossEncoderReranker
+from langchain.retrievers.contextual_compression import ContextualCompressionRetriever
+from langchain_community.retrievers import BM25Retriever
+from langchain_core.stores import InMemoryStore
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-# Import chains with fallback
-try:
-    from langchain.chains import create_retrieval_chain
-    from langchain.chains.combine_documents import create_stuff_documents_chain
-except ImportError:
-    try:
-        from langchain_community.chains import create_retrieval_chain
-        from langchain_community.chains.combine_documents import create_stuff_documents_chain
-    except ImportError:
-        print("Warning: Chain functions may not be available.")
-        create_retrieval_chain = None
-        create_stuff_documents_chain = None
-
+from langchain.chains.retrieval import create_retrieval_chain
+from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
-
-# Import memory with fallback
-try:
-    from langchain.memory import ConversationSummaryBufferMemory
-except ImportError:
-    try:
-        from langchain_community.memory import ConversationSummaryBufferMemory
-    except ImportError:
-        print("Warning: ConversationSummaryBufferMemory may not be available.")
-        ConversationSummaryBufferMemory = None
+from langchain.memory import ConversationSummaryBufferMemory
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.documents import Document
 from langchain_core.callbacks import BaseCallbackHandler
-from langchain_community.retrievers import BM25Retriever
 
 # Custom imports
 from ..utils.embedding_wrapper import HuggingFaceEmbeddings
