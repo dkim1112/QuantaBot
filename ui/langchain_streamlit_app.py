@@ -7,6 +7,19 @@ import tempfile
 import os
 import time
 
+# Cache expensive model loading for cloud performance
+@st.cache_resource
+def load_embedding_model():
+    """Cache the embedding model to avoid reloading on every session"""
+    from src.utils.embedding_wrapper import HuggingFaceEmbeddings
+    return HuggingFaceEmbeddings()
+
+@st.cache_resource
+def load_cross_encoder_model():
+    """Cache the cross-encoder model to avoid reloading"""
+    from langchain_community.cross_encoders import HuggingFaceCrossEncoder
+    return HuggingFaceCrossEncoder(model_name="cross-encoder/ms-marco-MiniLM-L-6-v2")
+
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # Check for OpenAI API key
@@ -152,9 +165,11 @@ def streamlit_ui():
                 with st.spinner("Processing with LangChain integrated RAG pipeline..."):
                     start_time = time.time()
 
-                    # Initialize LangChain QuantaBot
+                    # Initialize LangChain QuantaBot with cached models
+                    cached_embedding_model = load_embedding_model()
                     langchain_quanta = LangChainQuantaBot(
-                        collection_name=st.session_state["collection_name"]
+                        collection_name=st.session_state["collection_name"],
+                        embedding_function=cached_embedding_model
                     )
 
                     # Convert uploaded files to temp files while preserving original names

@@ -3,6 +3,15 @@ import os
 import numpy as np
 from typing import List, Optional, Dict, Any
 
+# Detect cloud environment for performance optimizations
+def is_cloud_environment():
+    return any([
+        os.getenv('STREAMLIT_CLOUD'),
+        os.getenv('KUBERNETES_SERVICE_HOST'),
+        os.getenv('GAE_INSTANCE'),
+        'streamlit' in os.getenv('HOME', '').lower()
+    ])
+
 # LangChain imports - Using exact paths that work locally
 from langchain_chroma import Chroma
 from langchain.retrievers import MultiQueryRetriever, EnsembleRetriever, ParentDocumentRetriever
@@ -50,9 +59,9 @@ class QuantaCallbackHandler(BaseCallbackHandler):
 
 
 class LangChainQuantaBot:
-    def __init__(self, llm=None, collection_name=None):
+    def __init__(self, llm=None, collection_name=None, embedding_function=None):
         self.llm = llm or MyOpenAI()
-        self.embedding_function = HuggingFaceEmbeddings()
+        self.embedding_function = embedding_function or HuggingFaceEmbeddings()
         self.collection_name = collection_name or f"collection_{uuid.uuid4().hex[:8]}"
         self.persist_directory = f"chroma_{self.collection_name}"
 
@@ -108,10 +117,25 @@ class LangChainQuantaBot:
             parent_splitter=self.parent_splitter,
         )
 
-        # 2. Create multi-query retriever for query expansion
+        # 2. Create optimized multi-query retriever (reduced queries for cloud speed)
+        from langchain_core.prompts import PromptTemplate
+
+        # Custom prompt for fewer queries (3 -> 2)
+        optimized_query_prompt = PromptTemplate(
+            input_variables=["question"],
+            template="""You are an AI language model assistant. Your task is
+            to generate 2 different versions of the given user question to
+            retrieve relevant documents from a vector database. By generating
+            multiple perspectives on the user question, your goal is to help
+            the user overcome some of the limitations of distance-based similarity
+            search. Provide these alternative questions separated by newlines.
+            Original question: {question}""",
+        )
+
         multi_query_retriever = MultiQueryRetriever.from_llm(
             retriever=parent_retriever,
             llm=self.llm,
+            prompt=optimized_query_prompt,
             include_original=True
         )
 
