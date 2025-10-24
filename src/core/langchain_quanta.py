@@ -3,7 +3,7 @@ import os
 import numpy as np
 from typing import List, Optional, Dict, Any
 
-# LangChain imports - Direct imports for LangChain 0.3+
+# LangChain imports - Using exact paths that work locally
 from langchain_chroma import Chroma
 from langchain.retrievers import MultiQueryRetriever, EnsembleRetriever, ParentDocumentRetriever
 from langchain.retrievers.document_compressors import CrossEncoderReranker
