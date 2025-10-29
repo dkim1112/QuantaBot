@@ -61,7 +61,7 @@ class DocumentProcessor:
                 document = Document(page_content=processed_text, metadata=metadata)
                 all_docs.append(document)
 
-        # Add all documents to the document store once at the end
+        # Add all documents to the document store
         document_store.add_documents(all_docs)
 
         # We are returning a full set of chunks that combined all the files uploaded into one.

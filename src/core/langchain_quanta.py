@@ -97,7 +97,6 @@ class LangChainQuantaBot:
         )
 
     def setup_vectorstore(self):
-        """Initialize the vector store. Utilizes ChromaDB"""
         self.vectorstore = Chroma(
             collection_name=self.collection_name,
             embedding_function=self.embedding_function,

@@ -1,4 +1,9 @@
 import streamlit as st
+
+if "page_config_set" not in st.session_state:
+    st.set_page_config(page_title="QuantaBot", layout="wide")
+    st.session_state["page_config_set"] = True
+
 from src.core.langchain_quanta import LangChainQuantaBot
 import uuid
 import atexit
@@ -6,8 +11,9 @@ import shutil
 import tempfile
 import os
 import time
+import base64
 
-# Cache expensive model loading for cloud performance
+# Cache expensive model loading
 @st.cache_resource
 def load_embedding_model():
     """Cache the embedding model to avoid reloading on every session"""
@@ -87,8 +93,6 @@ def check_authentication():
 
     return True
 
-# Streamlit configuration
-st.set_page_config(page_title="QuantaBot", layout="wide")
 st.markdown("""
     <style>
     section.main > div {
@@ -157,19 +161,22 @@ def streamlit_ui():
             st.session_state["processing_stats"] = {}
 
     # Document preprocessing
-    if st.button("Process Document(s)", type="primary"):
+    process_button = st.button("Process Document(s)", type="primary")
+
+    if process_button:
         if st.session_state["files"] is None:
             st.warning("Please upload documents first.")
         else:
             try:
-                with st.spinner("Processing with LangChain integrated RAG pipeline..."):
-                    start_time = time.time()
+                start_time = time.time()
 
-                    # Initialize LangChain QuantaBot with cached models
-                    cached_embedding_model = load_embedding_model()
+                # Use local processing
+                with st.spinner("Processing documents..."):
+                    # Initialize LangChain QuantaBot
+                    embedding_model = load_embedding_model()
                     langchain_quanta = LangChainQuantaBot(
                         collection_name=st.session_state["collection_name"],
-                        embedding_function=cached_embedding_model
+                        embedding_function=embedding_model
                     )
 
                     # Convert uploaded files to temp files while preserving original names
@@ -198,14 +205,15 @@ def streamlit_ui():
                     st.session_state["processing_stats"] = {
                         "documents_processed": len(documents),
                         "processing_time": processing_time,
-                        "retriever_type": type(langchain_quanta.retriever).__name__
+                        "retriever_type": type(langchain_quanta.retriever).__name__,
+                        "processing_method": "Local Processing"
                     }
 
-                    # Register cleanup
+                    st.success(f"Processing Complete! {len(documents)} chunks in {processing_time:.1f}s")
+
+                    # Register cleanup for processing
                     if hasattr(langchain_quanta, "persist_directory") and langchain_quanta.persist_directory:
                         atexit.register(cleanup_chroma_folder(langchain_quanta.persist_directory))
-
-                    st.success(f"Ready! Processed {len(documents)} chunks in {processing_time:.1f}s")
 
             except Exception as e:
                 st.error(f"❌ Error during processing: {e}")
@@ -214,12 +222,14 @@ def streamlit_ui():
     if st.session_state["processing_stats"]:
         stats = st.session_state["processing_stats"]
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric("Documents Processed", stats["documents_processed"])
         with col2:
             st.metric("Processing Time", f"{stats['processing_time']:.1f}s")
         with col3:
+            st.metric("Processing Method", stats.get("processing_method", "Unknown"))
+        with col4:
             st.metric("Retriever Type", stats["retriever_type"])
 
     # Query section
@@ -282,7 +292,7 @@ def streamlit_ui():
                 })
 
                 # Display answer
-                st.markdown("### 📝 Answer:")
+                st.markdown("### Answer:")
                 st.write(answer)
 
                 # Display source citations
