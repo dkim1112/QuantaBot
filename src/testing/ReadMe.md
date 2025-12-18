@@ -49,4 +49,4 @@ The reason lies in its alignment with the goals of both semantic understanding a
 Strong performance on this dataset suggests that the retrieval model is capable of handling complex, real-world queries - translating to more accurate and contextually relevant responses in chatbot applications (i.e. QuantaBot). Moreover, BEIR is known to provide a more standardized format (including documents, queries, and relevance labels), supporting reproducibility and fair comparison across retrieval methods.
 
 > ℹ️ **Note**  
-> Considering compile time, common limit has been set to 500 documents and 20 queries (can be easily adjusted inside the code).
+> Considering compile time, common limit has been set to 2000 documents and 100 queries (can be easily adjusted inside the code).

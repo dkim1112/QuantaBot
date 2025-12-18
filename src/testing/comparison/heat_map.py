@@ -19,14 +19,19 @@ df["label"] = df["model"] + " (" + df["similarity"] + ")"
 # Extract std dev columns and set the model label as index
 std_df = df.set_index("label")[["NDCG_std", "F1_std", "MRR_std", "Recall@5_std"]] # excluded time
 
-normalized_df = (std_df - std_df.min()) / (std_df.max() - std_df.min())
+# Global normalization across ALL values, not per-column
+all_values = std_df.values.flatten()
+global_min = np.min(all_values)
+global_max = np.max(all_values)
+normalized_df = (std_df - global_min) / (global_max - global_min)
 
-original = cm.get_cmap("YlOrBr")
-flattened = ListedColormap(original(np.linspace(0.3, 0.4, 512))) # smoother color transition
+# Use full color range for better contrast
+import matplotlib.pyplot as plt
+colormap = plt.cm.YlOrRd  # Use full colormap range
 
 # Plot: Models on Y-axis, metrics on X-axis
 plt.figure(figsize=(10, 6))
-sns.heatmap(normalized_df, annot=std_df, fmt=".3f", cmap=flattened, cbar_kws={'label': 'Normalized Std Dev'})
+sns.heatmap(normalized_df, annot=std_df, fmt=".3f", cmap=colormap, cbar_kws={'label': 'Normalized Std Dev'})
 plt.title("Stability of Retrieval Performance (Standard Deviation across Queries)")
 plt.ylabel("Embedding Model")
 plt.xlabel("Metric")

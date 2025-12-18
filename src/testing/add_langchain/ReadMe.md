@@ -24,17 +24,17 @@ To evaluate the impact of LangChain, I built and tested two retrieval pipelines 
 1. Embed queries
 2. Compute **cosine similarity** between query and document embeddings
 3. Return **Top-5** most similar documents and compute evaluation metrics
-4. Results saved to: `baseline_nli_bert_results.csv`
+4. Results saved to: `baseline_mpnet_results.csv`
 
-> Best-performing model from Step (2) - **NLI-BERT** - was used here.
+> Best-performing model from Step (2) - **MPNet** - was used here.
 
 #### <u>LangChain-Enhanced Pipeline</u>
 
 1. Built using **LangChain's** `create_retrieval_chain()` method
-2. Reused the same **vector store** and **embedding model** (NLI-BERT) for fair comparison
+2. Reused the same **vector store** and **embedding model** (MPNet) for fair comparison
 3. Integrated a **mock LLM** to simulate full pipeline flow without actual API latency or cost
 4. Return **Top-5** most similar documents and compute evaluation metrics
-5. Results saved to: `langchain_vector_retrieval_results.csv`
+5. Results saved to: `langchain_mpnet_results.csv`
 
 > Additional _noise_ intentionally added to simulate real-world variation and test LangChain's robustness.
 

@@ -5,8 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 from beir import util
 from beir.datasets.data_loader import GenericDataLoader
-from transformers import AutoTokenizer, AutoModel
-import torch
+from sentence_transformers import SentenceTransformer
 from sklearn.metrics import ndcg_score, f1_score
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -32,18 +31,14 @@ doc_ids = list(corpus.keys())[:LIMIT_DOCS + num_distractors]
 texts = [corpus[doc_id]['text'] for doc_id in doc_ids]
 query_ids = list(queries.keys())[:LIMIT_QUERIES]
 
-# NLI-Roberta embeddings
-model_name = "sentence-transformers/nli-roberta-base"
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModel.from_pretrained(model_name)
+# MPNet embeddings (best performing model from comparison)
+model_name = "all-mpnet-base-v2"
+model = SentenceTransformer(model_name)
 
-def get_bert_embedding(text):
-    inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512)
-    with torch.no_grad():
-        outputs = model(**inputs)
-    return outputs.last_hidden_state.mean(dim=1).squeeze().numpy()
+def get_embedding(text):
+    return model.encode(text, convert_to_numpy=True)
 
-doc_embeddings = [get_bert_embedding(text) for text in texts]
+doc_embeddings = [get_embedding(text) for text in texts]
 
 results = []
 
@@ -53,7 +48,7 @@ for query_id in tqdm(query_ids):
     if not ground_truth:
         continue
 
-    query_embedding = get_bert_embedding(query)
+    query_embedding = get_embedding(query)
 
     tracemalloc.start()
     t0 = time.time()
@@ -83,7 +78,7 @@ for query_id in tqdm(query_ids):
 
     results.append({
         "query_id": query_id,
-        "method": "Baseline+NLI-BERT",
+        "method": "Baseline+MPNet",
         "NDCG": ndcg,
         "F1": f1,
         "MRR": mrr,
@@ -94,5 +89,5 @@ for query_id in tqdm(query_ids):
 
 # Save results
 df = pd.DataFrame(results)
-df.to_csv("baseline_nli_bert_results.csv", index=False)
-print("Saved: baseline_nli_bert_results.csv")
+df.to_csv("baseline_mpnet_results.csv", index=False)
+print("Saved: baseline_mpnet_results.csv")

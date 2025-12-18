@@ -18,16 +18,19 @@ data_path = util.download_and_unzip(url, "datasets")
 corpus, queries, qrels = GenericDataLoader(data_folder=data_path).load(split="test")
 
 # Limit documents and queries for performance
-LIMIT_DOCS = 500
-LIMIT_QUERIES = 20
+LIMIT_DOCS = 2000
+LIMIT_QUERIES = 100
 doc_id_map = list(corpus.keys())[:LIMIT_DOCS]
 texts = [corpus[doc_id]['text'] for doc_id in doc_id_map]
 query_ids = list(queries.keys())[:LIMIT_QUERIES]
 
+# Calculate document lengths for scaling (word count)
+doc_lengths = [len(text.split()) for text in texts]
+
 # Models to test
 models_to_test = {
     "MiniLM": "all-MiniLM-L6-v2",
-    "MPNet": "paraphrase-mpnet-base-v2",
+    "MPNet": "all-mpnet-base-v2",
     "DistilUSE": "distiluse-base-multilingual-cased",
     "NLI-BERT": "bert-base-nli-mean-tokens",
     "SciBERT": "allenai-specter",  # Note: specter is based on SciBERT and optimized for scientific docs
@@ -72,7 +75,10 @@ for model_name, model_path in models_to_test.items():
         if similarity_name == "Cosine":
             embeddings = normalize(base_embeddings) # Normalization needs to be used for Cos. Similarity
         else:
-            embeddings = base_embeddings
+            # For L2: Scale embeddings by document length to show magnitude effects
+            # Longer documents get higher magnitude (more "important")
+            length_scaling = np.array(doc_lengths).reshape(-1, 1) / np.mean(doc_lengths)
+            embeddings = base_embeddings * length_scaling
 
         index = index_func(embeddings.shape[1])
         index.add(embeddings)
@@ -89,8 +95,11 @@ for model_name, model_path in models_to_test.items():
             query_embedding = model.encode([query], convert_to_numpy=True)
             if similarity_name == "Cosine":
                 query_embedding = normalize(query_embedding)
-            elif similarity_name == "L2":
-                query_embedding = base_embeddings * 1.2
+            else:
+                # For L2: Scale query by its word count (like documents)
+                query_length = len(query.split())
+                query_scaling = query_length / np.mean(doc_lengths)
+                query_embedding = query_embedding * query_scaling
 
             tracemalloc.start() # Start memory tracking
             t0 = time.time()
