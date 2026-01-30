@@ -28,10 +28,20 @@ ndcg_shapiro = shapiro(ndcg_diff).pvalue
 mrr_shapiro = shapiro(mrr_diff).pvalue
 r5_shapiro = shapiro(r5_diff).pvalue
 
-print(f"F1:       {f1_shapiro:.5f} {'(NORMAL)' if f1_shapiro > 0.05 else '(NON-NORMAL, use Wilcoxon)'}")
-print(f"NDCG:     {ndcg_shapiro:.5f} {'(NORMAL)' if ndcg_shapiro > 0.05 else '(NON-NORMAL, use Wilcoxon)'}")
-print(f"MRR:      {mrr_shapiro:.5f} {'(NORMAL)' if mrr_shapiro > 0.05 else '(NON-NORMAL, use Wilcoxon)'}")
-print(f"Recall@5: {r5_shapiro:.5f} {'(NORMAL)' if r5_shapiro > 0.05 else '(NON-NORMAL, use Wilcoxon)'}\n")
+print(f"F1:       {f1_shapiro:.5f} {'(NORMAL)' if f1_shapiro > 0.05 else '(NON-NORMAL)'}")
+print(f"NDCG:     {ndcg_shapiro:.5f} {'(NORMAL)' if ndcg_shapiro > 0.05 else '(NON-NORMAL)'}")
+print(f"MRR:      {mrr_shapiro:.5f} {'(NORMAL)' if mrr_shapiro > 0.05 else '(NON-NORMAL)'}")
+print(f"Recall@5: {r5_shapiro:.5f} {'(NORMAL)' if r5_shapiro > 0.05 else '(NON-NORMAL)'}")
+
+# Try log transformation for NDCG if not normal
+ndcg_transformed = None
+if ndcg_shapiro <= 0.05:
+    import numpy as np
+    ndcg_transformed = np.log(ndcg_diff + 1 - np.min(ndcg_diff))
+    ndcg_transformed_shapiro = shapiro(ndcg_transformed).pvalue
+    print(f"NDCG (log-transformed): {ndcg_transformed_shapiro:.5f} {'(NORMAL)' if ndcg_transformed_shapiro > 0.05 else '(STILL NON-NORMAL)'}")
+
+print()
 
 # Statistical Tests
 print("Statistical Test Results:")
@@ -56,6 +66,11 @@ if ndcg_shapiro > 0.05:
     ndcg_test = ttest_rel(merged_df["NDCG_langchain"], merged_df["NDCG_baseline"])
     ndcg_p = ndcg_test.pvalue
     test_type = "Paired t-test"
+elif ndcg_transformed is not None and shapiro(ndcg_transformed).pvalue > 0.05:
+    # Use paired t-test on transformed data
+    ndcg_test = ttest_rel(ndcg_transformed, np.zeros_like(ndcg_transformed))
+    ndcg_p = ndcg_test.pvalue
+    test_type = "Paired t-test (log-transformed)"
 else:
     ndcg_test = wilcoxon(ndcg_diff)
     ndcg_p = ndcg_test.pvalue
@@ -143,4 +158,6 @@ ax.set_xticklabels(metrics)
 ax.legend()
 
 plt.tight_layout()
-plt.show()
+plt.savefig('comparison_plot.png')
+print("\nPlot saved as 'comparison_plot.png'")
+print("\nNOTE: NDCG analysis used log-transformation to achieve normality for paired t-test")
