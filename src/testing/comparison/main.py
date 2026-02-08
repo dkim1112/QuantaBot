@@ -83,8 +83,7 @@ for model_name, model_path in models_to_test.items():
         index = index_func(embeddings.shape[1])
         index.add(embeddings)
 
-        query_scores = {"NDCG": [], "F1": [], "MRR": [], "Recall@5": [], "Time_ms": []}
-        # query_scores["Memory_bytes"] = []
+        query_scores = {"NDCG": [], "F1": [], "MRR": [], "Recall@5": [], "Memory_bytes": []}
 
         for query_id in tqdm(query_ids):
             query = queries[query_id]
@@ -102,9 +101,7 @@ for model_name, model_path in models_to_test.items():
                 query_embedding = query_embedding * query_scaling
 
             tracemalloc.start() # Start memory tracking
-            t0 = time.time()
             _, indices = index.search(query_embedding, 5)
-            t1 = time.time()
             mem = tracemalloc.get_traced_memory()[1]
             tracemalloc.stop()
 
@@ -114,8 +111,7 @@ for model_name, model_path in models_to_test.items():
             query_scores["F1"].append(f1)
             query_scores["MRR"].append(mrr)
             query_scores["Recall@5"].append(recall)
-            query_scores["Time_ms"].append((t1 - t0) * 1000)
-            # query_scores["Memory_bytes"].append(mem)
+            query_scores["Memory_bytes"].append(mem)
 
         result = {
             "model": model_name,
@@ -124,14 +120,12 @@ for model_name, model_path in models_to_test.items():
             "F1_mean": np.mean(query_scores["F1"]),
             "MRR_mean": np.mean(query_scores["MRR"]),
             "Recall@5_mean": np.mean(query_scores["Recall@5"]),
-            "Time_ms_mean": np.mean(query_scores["Time_ms"]),
-            # "Memory_bytes_mean": np.mean(query_scores["Memory_bytes"]),
+            "Memory_bytes_mean": np.mean(query_scores["Memory_bytes"]),
             "NDCG_std": np.std(query_scores["NDCG"]),
             "F1_std": np.std(query_scores["F1"]),
             "MRR_std": np.std(query_scores["MRR"]),
             "Recall@5_std": np.std(query_scores["Recall@5"]),
-            "Time_ms_std": np.std(query_scores["Time_ms"]),
-            # "Memory_bytes_std": np.std(query_scores["Memory_bytes"])
+            "Memory_bytes_std": np.std(query_scores["Memory_bytes"])
         }
         results.append(result)
 

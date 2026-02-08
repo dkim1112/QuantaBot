@@ -12,7 +12,7 @@ df = pd.read_csv("embeddings_all_metrics.csv")
 df["method"] = df["model"] + " (" + df["similarity"] + ")"
 
 # Metrics to plot
-metrics = ['NDCG_mean', 'Recall@5_mean', 'MRR_mean','F1_mean', 'Time_ms_mean']
+metrics = ['NDCG_mean', 'Recall@5_mean', 'MRR_mean','F1_mean', 'Memory_bytes_mean']
 
 # Plot grouped bars for L2 vs Cosine per model
 fig, axes = plt.subplots(nrows=3, ncols=2, figsize=(16, 12))
@@ -28,13 +28,23 @@ for i, metric in enumerate(metrics):
     l2_vals = df[df["similarity"] == "L2"][metric].values
     cos_vals = df[df["similarity"] == "Cosine"][metric].values
 
+    # Convert memory bytes to MB for better readability
+    if metric == "Memory_bytes_mean":
+        l2_vals = l2_vals / (1024 * 1024)
+        cos_vals = cos_vals / (1024 * 1024)
+
     ax.bar(x - width/2, l2_vals, width, label="L2", color="steelblue")
     ax.bar(x + width/2, cos_vals, width, label="Cosine", color="orange")
 
     ax.set_title(metric.replace("_", " "), fontsize=13)
     ax.set_xticks(x)
     ax.set_xticklabels(models, rotation=45)
-    ax.set_ylabel(metric)
+
+    # Set appropriate y-axis label
+    if metric == "Memory_bytes_mean":
+        ax.set_ylabel("Memory Usage (MB)")
+    else:
+        ax.set_ylabel(metric)
     ax.grid(True, linestyle="--", alpha=0.5)
     ax.legend()
 
@@ -45,7 +55,7 @@ key_ax.text(0, 0.85, "F1-score:    Balance Precision and Recall", fontsize=12)
 key_ax.text(0, 0.70, "NDCG:        Ranked Relevance Quality", fontsize=12)
 key_ax.text(0, 0.55, "Recall@5:   Top-5 Result Coverage", fontsize=12)
 key_ax.text(0, 0.40, "MRR:          First Relevant Answer Ranking", fontsize=12)
-key_ax.text(0, 0.25, "Time:          Processing Speed and Efficiency", fontsize=12)
+key_ax.text(0, 0.25, "Memory:      Memory Usage Efficiency", fontsize=12)
 
 plt.tight_layout()
 plt.savefig("bar_graph.png", dpi=300, bbox_inches='tight')
