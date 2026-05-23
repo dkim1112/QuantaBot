@@ -4,10 +4,13 @@ __pycache__/
 chroma_*
 **/venv/
 **/.venv/
+env/
 .env
 .DS_Store
 *.log
 temp_*
+results/
+medqa_evaluation_results/
 
 # Streamlit secrets - DO NOT COMMIT
 .streamlit/secrets.toml

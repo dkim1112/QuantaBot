@@ -6,21 +6,29 @@ QuantaBot is a sophisticated Python application designed to handle large documen
 
 ```
 QuantaBot/
+  ├── scripts/
+  │   ├── run_app.py                         # Streamlit entry point
+  │   └── run_medqa_eval.py                  # MedQA benchmark entry point
   ├── src/
-  │   ├── ReadMe.md
-  │   ├── core/
-  │   │   ├── langchain_quanta.py            # LangChain RAG system
-  │   │   └── llm.py                         # OpenAI wrapper
-  │   ├── loaders/
-  │   │   ├── ... various loaders
-  │   ├── utils/
-  │   │   ├── document_processor.py          # Optimized chunking
-  │   │   ├── embedding_wrapper.py           # MPNet embeddings
-  │   │   └── text_processing.py             # Text preprocessing
-  │   └── testing/
-  │       ├── ... various testing
-  └── ui/
-      └── langchain_streamlit_app.py         # Streamlit interface
+  │   └── quantabot/                         # Importable package
+  │       ├── core/
+  │       │   ├── rag.py                     # LangChain RAG system
+  │       │   └── llm.py                     # OpenAI wrapper
+  │       ├── loaders/                       # PDF / TXT / DOCX loaders
+  │       ├── utils/
+  │       │   ├── document_processor.py
+  │       │   ├── embedding_wrapper.py
+  │       │   └── text_processing.py
+  │       └── ui/
+  │           └── streamlit_app.py
+  ├── evaluations/
+  │   ├── README.md
+  │   └── medqa/
+  │       └── evaluator.py                   # USMLE / MedQA evaluator
+  ├── data/                                  # MedQA dataset + medical textbooks
+  ├── results/                               # Eval JSON / CSV outputs
+  ├── docs/                                  # Research roadmap, notes
+  └── archive/                               # Prior experiments
 ```
 
 ### Core Technologies
@@ -63,7 +71,15 @@ QuantaBot/
 
 > This project separates retrieval and generation.
 
-> Please feel free to checkout the various ReadMe's located throughout the folders for in-depth discussion. (inside `src`, `src/testing`, `src/testing/comparison`, and `src/testing/add_langchain`)
+> Historical experiments and engineering notes from earlier iterations live in `archive/`.
+
+### Configurable embedding model
+
+The embedding model defaults to `all-mpnet-base-v2` but can be overridden via env var:
+
+```bash
+export QUANTA_EMBEDDING_MODEL=BAAI/bge-large-en-v1.5
+```
 
 ## **Installation**
 
@@ -81,11 +97,7 @@ Follow the steps below to set up your chatbot:
    pip install -r requirements.txt
    ```
 
-3. **Install other files**
-
-   Sometimes, manual installations are required. Install as necessary.
-
-4. **Set up your OpenAI API key**
+3. **Set up your OpenAI API key**
 
    Obtain a personal API key from [OpenAI](https://openai.com/index/openai-api/) and add it to your terminal environment, like this:
 
@@ -108,10 +120,10 @@ Follow the steps below to set up your chatbot:
 To use Quanta Chatbot, follow these steps:
 
 1. Ensure all dependencies are installed and OpenAI API key is incorporated into the file.
-2. Run the main.py file using the following command at QuantaBot (most outside) directory.
+2. Launch the Streamlit app from the QuantaBot project root:
 
    ```bash
-   streamlit run main.py
+   streamlit run scripts/run_app.py
    ```
 
    This launches the **Advanced LangChain RAG System** interface.
@@ -145,12 +157,22 @@ While running the program, various errors might occur. If so, make sure to try t
 4. Make sure to search up the error message that appears on the terminal window.
 5. Hand type the terminal commands, instead of copying and pasting.
 
-## **[Testing] Model Evaluation and Diagnostic Tools**
+## **[Testing] Model Evaluation**
 
-Before developing the main chatbot interface, this section shows how the internal components of the retrieval system were tested and evaluated independently. By running a series of experiments - including statistical visualizations, metric-based comparisons, and LangChain evaluations - I aim to identify the most effective configurations for semantic search and information retrieval. This includes analyzing embeddings, scoring methods like F1, NDCG, MRR, Recall@K, and evaluating the trade-offs between accuracy, speed, and memory efficiency across various approaches.
+Earlier component-level retrieval experiments (TF-IDF vs SBERT, BEIR/NFCorpus benchmarks) are archived in `archive/` for historical reference.
 
-> ℹ️ **Note**  
-> All files and descriptions relevant to testing can be found in the `src/testing` directory.
+The active benchmark is **MedQA (USMLE)**:
+
+```bash
+python scripts/run_medqa_eval.py
+```
+
+The evaluator reports:
+- **Letter accuracy** — strict A/B/C/D/E match (the headline metric)
+- **Retrieval-contains-answer rate** — diagnostic for whether retrieval or the LLM is the bottleneck
+- Loose substring matches, response time, and clinical-relevance heuristics
+
+See `evaluations/README.md` and `docs/research_roadmap.md` for details.
 
 ##
 
